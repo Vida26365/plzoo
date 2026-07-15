@@ -1,0 +1,11 @@
+(executable
+ (name minilinear)
+ (libraries zoo)
+ (promote
+  (until-clean)
+  (into ../..)))
+
+(menhir
+  (modules parser))
+
+(ocamllex lexer)
