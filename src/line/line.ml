@@ -31,4 +31,4 @@ module Line = Zoo.Main(struct
 
 end) ;;
 
-MiniLinear.main () ;;
+Line.main () ;;
