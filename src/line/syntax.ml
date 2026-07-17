@@ -3,7 +3,7 @@
 (** The type of variable names. *)
 type name = string
 
-(* MiniLinear types *)
+(* Linear types *)
 
 type ltype = 
   | LInt (** integer *)

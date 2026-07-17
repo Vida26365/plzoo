@@ -1,6 +1,6 @@
-module MiniLinear = Zoo.Main(struct
+module Line = Zoo.Main(struct
 
-  let name = "MiniLinear"
+  let name = "Line"
 
   type command = Syntax.toplevel_cmd
 

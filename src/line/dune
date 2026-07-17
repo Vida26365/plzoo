@@ -1,5 +1,5 @@
 (executable
- (name minilinear)
+ (name line)
  (libraries zoo)
  (promote
   (until-clean)
