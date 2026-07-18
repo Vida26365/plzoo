@@ -11,21 +11,23 @@
 %token DIVIDE
 %token MOD
 %token EQUAL LESS
-%token AND
-%token WITH
-%token OPLUS
-%token PAR
-%token LOLI
-%token TOP BOT
-%token UNIT ZERO
-%token LET
+
 %token COLON
-%token SEMICOLON2
 %token LPAREN RPAREN
+
+%token SPLIT TO IN
+%token LET
+
+%token INL
+%token INR
+
+%token BUNDLE FROM 
+
 %token FST
 %token SND
+
 %token QUIT
-%token EO
+%token EOF
 
 
 %start toplevel file
