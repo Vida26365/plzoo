@@ -1,4 +1,7 @@
 
+
+open Syntax
+
 (** Conversion from an expression to a string *)
 let string_of_expression (e : expr) : string =
   let rec to_str (n:int) (e : expr)= (* we need n, to know where should we put brackets *)
