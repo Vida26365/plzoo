@@ -6,38 +6,44 @@
 let var = ['_' 'a'-'z' 'A'-'Z'] ['_' 'a'-'z' 'A'-'Z' '0'-'9']*
 
 rule token = parse
-    "--" [^'\n']* '\n' { Lexing.new_line lexbuf; token lexbuf }
+    '#' [^'\n']* '\n' { Lexing.new_line lexbuf; token lexbuf }
   | '\n'            { Lexing.new_line lexbuf; token lexbuf }
   | [' ' '\t']      { token lexbuf }
-  | ['0'-'9']+      { INT (int_of_string(lexeme lexbuf)) }
-  | "int"           { LINT }
-  | "ephemeral"     { LEPHBOOL }
-  | "persistant"    { LPERBOOL }
-  | "let"           { LET }
-  | ":quit"         { QUIT }
+  | '-'? ['0'-'9']+ { INT (int_of_string(lexeme lexbuf)) }
+
+  | "true"          { TRUE }
+  | "false"         { FALSE }
+
+  | "fst"           { FST }
+  | "snd"           { SND }
+
+  | "let"           { LET } 
+
+  | "match"         { MATCH }
   | "with"          { WITH }
-  | ";;"            { SEMICOLON2 }
+  | "inl"           { INL }
+  | "inr"           { INR }
+
+  | "split"         {SPLIT}
+  | "to"            { TO }
+  | "in"            { IN }
+
+  | "lambda"        { LAMBDA }
+  
+
+
+  
   | '%'             { MOD }
   | '('             { LPAREN }
   | ')'             { RPAREN }
   | '*'             { TIMES }
   | '+'             { PLUS }
+  | ','             { COMMA }
   | '-'             { MINUS }
   | '/'             { DIVIDE }
-  | ':'             { COLON }
   | '<'             { LESS }
   | '='             { EQUAL }
-  | "&"             { AND }
-  | "⊗"             { AND }
-  | "⊕"             { OPLUS }
-  | "⅋"             { PAR }
-  | "⊸"             { LOLI }
-  | "Τ"|"T"         { TOP }
-  | "𝈜"|"_|_"       { BOT }
-  | "1"             { UNIT }
-  | "0"             { ZERO }
+  | '|'             { ALTERNATIVE }
+  
   | var             { VAR (lexeme lexbuf) }
   | eof             { EOF }
-
-{
-}
