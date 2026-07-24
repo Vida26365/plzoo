@@ -44,6 +44,6 @@ rule token = parse
   | '<'             { LESS }
   | '='             { EQUAL }
   | '|'             { ALTERNATIVE }
-  
+  | ':'             { COLON }
   | var             { VAR (lexeme lexbuf) }
   | eof             { EOF }

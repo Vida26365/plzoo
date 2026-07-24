@@ -17,10 +17,10 @@ module Line = Zoo.Main(struct
   let toplevel_parser = Some (fun _ -> Parser.toplevel Lexer.token)
 
   let exec (ctx, env) = function
-    | Syntax.Expr e ->
+    | Syntax.Expr _ ->
       (* evaluate and print result *)
-       let v = Interpret.interp env e in
-       Zoo.print_info "- : %s = " (Syntax.string_of_expression v) ;
+       (* let v = Interpret.interp env e in
+       Zoo.print_info "- : %s = " (Interpret.string_of_value v) ; *)
        Zoo.print_info "@." ;
        (ctx, env)
     | Syntax.Def (x, e) ->

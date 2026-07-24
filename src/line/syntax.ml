@@ -17,6 +17,7 @@ type ltype =
 type expr =
   | Var of name           (** variable *)
   | Int of int            (** integer constant *)
+  | Bool of bool          (** boolean constant *)
   | Times of expr * expr  (** product [e1 * e2] *)
   | Divide of expr * expr (** quotient [e1 / e2] *)
   | Mod of expr * expr    (** remainder [e1 % e2] *)
@@ -28,7 +29,7 @@ type expr =
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
 
-  | Fun of name * name * ltype * expr (** linear function [fun x:t ⊸ e] *)
+  | Fun of name * expr (** linear function [fun x:t ⊸ e] *)
   | Apply of expr * expr  (** linear aplication [e1 e2]*)
 
   | Inl of expr
