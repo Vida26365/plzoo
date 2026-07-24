@@ -7,9 +7,7 @@ type name = string
 
 type ltype = 
   | LInt (** integer *)
-  | LEphBool
-  | LPerBool
-  | LLoli of ltype * ltype
+  | LLolli of ltype * ltype
   | LAnd of ltype * ltype
   | LWith of ltype * ltype
   | LPlus of ltype * ltype
@@ -28,16 +26,16 @@ type expr =
   | Less of expr * expr
 
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
-  | Split of expr * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
+  | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
 
-  | Fun of name * ltype * expr (** linear function [fun x:t ⊸ e] *)
+  | Fun of name * name * ltype * expr (** linear function [fun x:t ⊸ e] *)
   | Apply of expr * expr  (** linear aplication [e1 e2]*)
 
   | Inl of expr
   | Inr of expr
   | Match of expr * name * expr * name * expr
 
-  | Bundle of expr * expr * expr
+  | Bundle of expr * expr
   | Fst of expr
   | Snd of expr
 
