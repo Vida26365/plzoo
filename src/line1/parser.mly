@@ -1,12 +1,12 @@
 %{
-  open Utils.Syntax
+  open Syntax
 %}
 
-%token <Utils.Syntax.name> VAR
+%token <Syntax.name> VAR
 %token <int> INT
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQUAL LESS
-%token COMMA
+%token COMMA COLON
 %token LPAREN RPAREN
 %token SPLIT TO IN LET
 %token MATCH WITH INL INR ALTERNATIVE
@@ -15,10 +15,10 @@
 %token EOF
 
 %start file
-%type <Utils.Syntax.toplevel_cmd list> file
+%type <Syntax.toplevel_cmd list> file
 
 %start toplevel
-%type <Utils.Syntax.toplevel_cmd> toplevel
+%type <Syntax.toplevel_cmd> toplevel
 
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
