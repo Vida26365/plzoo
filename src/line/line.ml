@@ -13,7 +13,7 @@ module Line = Zoo.Main(struct
 
   let toplevel_parser = Some (fun _ -> Parser.toplevel Lexer.token)
 
-  let exec env cmd = initial_environment (* TODO *)
+  let exec _ _ = initial_environment (* TODO *)
 
 end) ;;
 
