@@ -46,5 +46,5 @@ type expr =
 type toplevel_cmd =
   | Expr of expr       (** an expression to be evaluated *)
   | Def of name * expr (** toplevel definition [let x = e] *)
-  | Quit               (** exit toplevel [$quit] *)
+  | Quit               (* exit toplevel [$quit] *)
 
