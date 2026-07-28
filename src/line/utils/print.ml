@@ -1,5 +1,7 @@
 (* open Syntax *)
 
+(* TODO: everything. I considered seperating expressions into cathegories plain_expr, atom_expr and app_expr, bur will probably pivor to printing with depth numbers*)
+
 type name = Syntax.name
 
 type expr =
@@ -41,4 +43,4 @@ type app_expr =
 
 (* 
 let print_atom_expr = function
-  | ALRparen e -> "(" ^ (print_expr e) ^ ")" *)
+  | ALRparen e -> "(" ^ (print_expr e) ^ ")"  :( *)

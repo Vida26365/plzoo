@@ -3,8 +3,7 @@
 (** The type of variable names. *)
 type name = string
 
-(* Linear types *)
-
+(** Linear types *)
 type ltype = 
   | LInt (** integer *)
   | LLolli of ltype * ltype
