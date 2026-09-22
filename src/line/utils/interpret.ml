@@ -109,7 +109,6 @@ let rec interp env =
        | VInt left_value, VInt right_value -> VBool (left_value < right_value)
        | _ -> runtime_error "Integers expected in <")
   
-  (** Defining pair with VClosure with local environment serves, that when Split gets called, only variables in expr get bounded. Similarly for other times VClosure is used *)
   | Pair (left, right) -> VPair (VClosure ((local_env left), left), VClosure ((local_env right), right))
   | Split (pair, name1, name2, expr) -> (
     match interp env pair with
