@@ -69,88 +69,79 @@ let free_vars_to_env main_env free_vars =
   Environment.filter filter_func main_env
 
 
-(** interp models introduction and elimination rules for linear programms *)
-let rec interp env = 
-  let local_env expr = free_vars_to_env env (find_free_variables expr) in
-  function
+  let rec interp env =
+    function
   | Var name -> (match Environment.find_opt name env with
     | None -> runtime_error ("Unknown variable " ^ name)
     | Some value -> value )
   | Int value -> VInt value
   | Bool value -> VBool value
-  | Times (left, right) -> (
-    match (interp env left, interp env right) with
-    | VInt x, VInt y -> VInt (x * y)
-    | _ -> runtime_error "Integers expected in multiplication")
-  | Divide (left, right) ->
-      (match interp env left, interp env right with
-       | VInt _, VInt 0 -> runtime_error "Division by 0"
-       | VInt left_value, VInt right_value -> VInt (left_value / right_value)
-       | _ -> runtime_error "Integers expected in division")
-  | Mod (left, right) ->
-      (match interp env left, interp env right with
-       | VInt _, VInt 0 -> runtime_error "Division by 0"
-       | VInt left_value, VInt right_value -> VInt (left_value mod right_value)
-       | _ -> runtime_error "Integers expected in remainder")
-  | Plus (left, right) ->
-      (match interp env left, interp env right with
-       | VInt left_value, VInt right_value -> VInt (left_value + right_value)
-       | _ -> runtime_error "Integers expected in addition")
-  | Minus (left, right) ->
-      (match interp env left, interp env right with
-       | VInt left_value, VInt right_value -> VInt (left_value - right_value)
-       | _ -> runtime_error "Integers expected in subtraction")
-  | Equal (left, right) ->
-      (match interp env left, interp env right with
-       | VInt left_value, VInt right_value -> VBool (left_value = right_value)
-       | _ -> runtime_error "Integers expected in =")
-  | Less (left, right) ->
-      (match interp env left, interp env right with
-       | VInt left_value, VInt right_value -> VBool (left_value < right_value)
-       | _ -> runtime_error "Integers expected in <")
-  
-  | Pair (left, right) -> VPair (VClosure ((local_env left), left), VClosure ((local_env right), right))
-  | Split (pair, name1, name2, expr) -> (
-    match interp env pair with
-    | VPair (VClosure (env1, _), VClosure (env2, _)) -> ( 
-      let env3 = local_env expr 
-      |> Environment.remove name1
-      |> Environment.remove name2
-      in
-      let new_env = env3
-      |> Environment.union (fun _ value1 value2 -> if value1 == value2 then Some value1 else None) env2
-      |> Environment.union (fun _ value1 value2 -> if value1 == value2 then Some value1 else None) env1
-      in
-      VClosure (new_env, expr)
-    )
-    | _ -> runtime_error "Pair expected in split")
+  | Times (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt a, VInt b -> VInt (a * b)
+    | _ -> assert false)
+  | Divide (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt _, VInt 0 -> runtime_error "Division by 0"
+    | VInt a, VInt b -> VInt (a / b)
+    | _ -> assert false)
+  | Mod (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt _, VInt 0 -> runtime_error "Division by 0"
+    | VInt a, VInt b -> VInt (a mod b)
+    | _ -> assert false)
+  | Plus (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt a, VInt b -> VInt (a + b)
+    | _ -> assert false)
+  | Minus (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt a, VInt b -> VInt (a - b)
+    | _ -> assert false)
+  | Equal (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt a, VInt b -> VBool (a == b)
+    | _ -> assert false)
+  | Less (e1, e2) -> (match interp env e1, interp env e2 with 
+    | VInt a, VInt b -> VBool (a < b)
+    | _ -> assert false)
 
-  | Fun (name_x, _ty, expr) -> VFun (Environment.remove name_x (local_env expr), name_x, expr)
+  | Pair (e1, e2) -> VPair (interp env e1, interp env e2)
+  | Split (pair, name1, name2, expr) -> 
+      (match interp env pair with
+        | VPair (e1, e2) -> (
+          let env' = env
+            |> Environment.add name1 e1 
+            |> Environment.add name2 e2 in
+          interp env' expr
+        )
+        | _ -> assert false)
+  | Fun (name_x, _ty, expr) -> VFun (Environment.remove name_x env, name_x, expr)
   | Apply (f, a) -> (
     match interp env f with
-    | VFun (lenv, name_x, _) -> (
-      let new_env = Environment.add name_x (interp env a) lenv in
-      VClosure (new_env, f))
-    | _ -> runtime_error "Function expected in application")
-
+    | VFun (env', name_x, expr) -> (
+      let env'' = Environment.add name_x (interp env a) env' in
+      interp env'' expr
+    )
+    | _ -> assert false
+  )
   | Inl expr -> VInl (interp env expr)
   | Inr expr -> VInr (interp env expr)
-  | Match (sum, inlx, expr1, inly, expr2) -> (
+  | Match (sum, lname, lexpr, rname, rexpr) -> (
     match interp env sum with
     | VInl value -> (
-      let new_env = Environment.add inlx value (local_env expr1) in
-      VClosure (new_env, expr1))
+      let env' = Environment.add lname value env in
+      interp env' lexpr
+    )
     | VInr value -> (
-      let new_env = Environment.add inly value (local_env expr2) in
-      VClosure (new_env, expr2))
-    | _ -> runtime_error "Inl or Inr expected in match")
-
-  | Bundle (expr1, expr2) -> VWith ((interp env expr1), (interp env expr2))
+      let env' = Environment.add rname value env in
+      interp env' rexpr
+    )
+    | _ -> assert false
+    )
+  | Bundle (expr1, expr2) -> VWith (interp env expr1, interp env expr2)
   | Fst expr -> (
-    match expr with
-    | Bundle (_, _) -> interp env expr
-    | _ -> runtime_error "Bundle expected in fst")
+    match interp env expr with
+    | VWith (value, _) -> value
+    | _ -> assert false
+  )
   | Snd expr -> (
-    match expr with
-    | Bundle (_, _) -> interp env expr
-    | _ -> runtime_error "Bundle expected in fst")
+    match interp env expr with
+    | VWith (_, value) -> value
+    | _ -> assert false
+  )
+
