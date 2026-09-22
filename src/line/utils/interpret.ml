@@ -26,49 +26,6 @@ exception Runtime_error of string
 let runtime_error message = raise (Runtime_error message)
 
 
-(** Find free variables in expression *)
-let rec find_free_variables = 
-  function
-  | Var x -> NameSet.singleton x
-  | Int _ | Bool _        -> NameSet.empty
-  | Times (left, right)   -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Divide (left, right)  -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Mod (left, right)     -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Plus (left, right)    -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Minus (left, right)   -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Equal (left, right)   -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Less (left, right)    -> NameSet.union (find_free_variables left) (find_free_variables right)
-
-  | Pair (left, right)                -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Split (pair, name1, name2, expr)  -> ( (* Free variables are variables in expr and pair, without variables nam1 and name2 *)
-    find_free_variables pair
-    |> NameSet.union (find_free_variables expr)
-    |> NameSet.remove name1
-    |> NameSet.remove name2
-  )
-  | Fun (name, _ty, expr)      -> ( (* when expression e gets turnes into x -> e, x stops being free variable *)
-    find_free_variables expr
-    |> NameSet.remove name)
-  | Apply (expr1, expr2)       -> NameSet.union (find_free_variables expr1) (find_free_variables expr2)
-  
-  | Inl expr      -> find_free_variables expr
-  | Inr expr      -> find_free_variables expr
-  | Match (sum, name_inl, expr1, name_inr, expr2) -> (* free variables are from sum, expr1 and expr2, but name_inl and name_inr stop being free variables*)
-    find_free_variables sum
-    |> NameSet.union (find_free_variables expr1) 
-    |> NameSet.union (find_free_variables expr2) 
-    |> NameSet.remove name_inl
-    |> NameSet.remove name_inr
-  | Bundle (left, right) -> NameSet.union (find_free_variables left) (find_free_variables right)
-  | Fst expr -> find_free_variables expr
-  | Snd expr -> find_free_variables expr
-
-(** Get an subset of an environment, that containes only subset defined by subset of free variables*)
-let free_vars_to_env main_env free_vars = 
-  let filter_func key _ = NameSet.inter free_vars (NameSet.singleton key) == NameSet.empty in
-  Environment.filter filter_func main_env
-
-
   let rec interp env =
     function
   | Var name -> (match Environment.find_opt name env with
