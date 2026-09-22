@@ -14,6 +14,9 @@ rule token = parse
   | "true"          { TRUE }
   | "false"         { FALSE }
 
+  | "Int"           { TYPE_INT }
+  | "Bool"          { BOOL }
+
   | "fst"           { FST }
   | "snd"           { SND }
 
@@ -34,17 +37,20 @@ rule token = parse
 
   
   | '%'             { MOD }
+  | '&'             { AMP }
   | '('             { LPAREN }
   | ')'             { RPAREN }
   | '*'             { TIMES }
   | '+'             { PLUS }
   | ','             { COMMA }
+  | "-o"            { LOLLI }
   | '-'             { MINUS }
   | '/'             { DIVIDE }
   | '<'             { LESS }
   | '='             { EQUAL }
   | '|'             { ALTERNATIVE }
   | ':'             { COLON }
+  | ';'             { SEMICOLON }
   | var             { VAR (lexeme lexbuf) }  (* Zakaj je to *)
   | eof             { EOF }
 

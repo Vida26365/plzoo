@@ -46,7 +46,7 @@ let rec find_free_variables =
     |> NameSet.remove name1
     |> NameSet.remove name2
   )
-  | Fun (name, expr)           -> ( (* when expression e gets turnes into x -> e, x stops being free variable *)
+  | Fun (name, _ty, expr)      -> ( (* when expression e gets turnes into x -> e, x stops being free variable *)
     find_free_variables expr
     |> NameSet.remove name)
   | Apply (expr1, expr2)       -> NameSet.union (find_free_variables expr1) (find_free_variables expr2)
@@ -125,7 +125,7 @@ let rec interp env =
     )
     | _ -> runtime_error "Pair expected in split")
 
-  | Fun (name_x, expr) -> VFun (Environment.remove name_x (local_env expr), name_x, expr)
+  | Fun (name_x, _ty, expr) -> VFun (Environment.remove name_x (local_env expr), name_x, expr)
   | Apply (f, a) -> (
     match interp env f with
     | VFun (lenv, name_x, _) -> (

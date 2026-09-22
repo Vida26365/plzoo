@@ -4,12 +4,13 @@
 type name = string
 
 (** Linear types *)
-type ltype = 
+type ltype =
   | LInt (** integer *)
-  | LLolli of ltype * ltype
-  | LAnd of ltype * ltype
-  | LWith of ltype * ltype
-  | LPlus of ltype * ltype
+  | LBool (** boolean *)
+  | LLolli of ltype * ltype (** linear function [s ⊸ t] *)
+  | LAnd of ltype * ltype (** tensor (multiplicative conjunction) [s ⊗ t] *)
+  | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
+  | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
   (* | LPar of ltype * ltype *)
 
 
@@ -28,7 +29,7 @@ type expr =
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
 
-  | Fun of name * expr (** linear function [fun x:t ⊸ e] *)
+  | Fun of name * ltype * expr (** linear function [lambda x : t in e] *)
   | Apply of expr * expr  (** linear aplication [e1 e2]*)
 
   | Inl of expr

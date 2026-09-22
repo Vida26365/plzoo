@@ -6,12 +6,13 @@
 %token <int> INT
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQUAL LESS
-%token COMMA COLON
+%token COMMA COLON SEMICOLON
 %token LPAREN RPAREN
 %token SPLIT TO IN LET
 %token MATCH WITH INL INR ALTERNATIVE
 %token LAMBDA
 %token FST SND
+%token TYPE_INT BOOL LOLLI AMP
 %token EOF
 
 %start file
@@ -19,6 +20,8 @@
 
 %start toplevel
 %type <Utils.Syntax.toplevel_cmd> toplevel
+
+%type <Utils.Syntax.ltype> ltype
 
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
@@ -29,13 +32,13 @@
 file:
   | EOF
     { [] }
-  | cmd = toplevel EOF
-    { [cmd] }
+  | cmd = toplevel lst = file
+    { cmd :: lst }
 
 toplevel:
-  | LET x = VAR EQUAL e = expr
+  | LET x = VAR EQUAL e = expr SEMICOLON
     { Def (x, e) }
-  | e = expr
+  | e = expr SEMICOLON
     { Expr e }
 
 expr: plain_expr { $1 }
@@ -49,8 +52,8 @@ plain_expr:
     { Bool false }
   | x = VAR
     { Var x }
-  | LAMBDA x = VAR IN e = expr
-  { Fun (x, e) }
+  | LAMBDA x = VAR COLON t = ltype IN e = expr
+  { Fun (x, t, e) }
   | MATCH scrut = expr WITH INL x = VAR EQUAL left = expr ALTERNATIVE INR y = VAR EQUAL right = expr
     { Match (scrut, x, left, y, right) }
   | SPLIT pair = expr TO x = VAR y = VAR IN body = expr
@@ -102,3 +105,35 @@ atom_expr:
   | FALSE
     { Bool false }
 
+(* Types, from loosest to tightest binding: s -o t (right assoc) ; s + t ; s & t ; s * t *)
+ltype:
+  | t1 = plus_type LOLLI t2 = ltype
+    { LLolli (t1, t2) }
+  | t = plus_type
+    { t }
+
+plus_type:
+  | t1 = with_type PLUS t2 = plus_type
+    { LPlus (t1, t2) }
+  | t = with_type
+    { t }
+
+with_type:
+  | t1 = tensor_type AMP t2 = with_type
+    { LWith (t1, t2) }
+  | t = tensor_type
+    { t }
+
+tensor_type:
+  | t1 = atom_type TIMES t2 = tensor_type
+    { LAnd (t1, t2) }
+  | t = atom_type
+    { t }
+
+atom_type:
+  | TYPE_INT
+    { LInt }
+  | BOOL
+    { LBool }
+  | LPAREN t = ltype RPAREN
+    { t }
