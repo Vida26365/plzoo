@@ -26,6 +26,8 @@ type expr =
   | Equal of expr * expr
   | Less of expr * expr
 
+  | If of expr * expr * expr (** conditional [if e1 then e2 else e3] *)
+
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
 

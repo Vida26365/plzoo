@@ -32,6 +32,10 @@ rule token = parse
   | "in"            { IN }
 
   | "lambda"        { LAMBDA }
+
+  | "if"            { IF }
+  | "then"          { THEN }
+  | "else"          { ELSE }
   
 
 

@@ -49,13 +49,13 @@ let rec string_of_ltype = function
     [x] was already bound in [ctx] (shadowing), that outer binding is
     restored in the leftover context once [x] itself has been checked
     off. *)
-let with_var ctx x ty f =
-  let shadowed = Context.find_opt x ctx in
+let with_var ctx x (ty : ltype) f =
+  let org_ltype = Context.find_opt x ctx in
   let result, leftover = f (Context.add x ty ctx) in
   if Context.mem x leftover then
     linear_error "linear variable %s is never used" x ;
   let leftover =
-    match shadowed with
+    match org_ltype with
     | Some old_ty -> Context.add x old_ty leftover
     | None -> Context.remove x leftover
   in
@@ -134,6 +134,13 @@ let rec infer ctx e : ltype * context =
      | ty, _ ->
        typing_error "this expression has type %s but match expects a sum type s + t"
          (string_of_ltype ty))
+
+  | If (cond, e1, e2) ->
+    let ctx1 = check ctx LBool cond in
+    let ty1, ctx_left = infer ctx1 e1 in
+    let ctx_right = check ctx1 ty1 e2 in
+    require_same_context ctx_left ctx_right ;
+    ty1, ctx_left
 
   | Bundle (e1, e2) ->
     let ty1, ctx1 = infer ctx e1 in

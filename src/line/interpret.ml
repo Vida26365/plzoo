@@ -1,4 +1,4 @@
-open Syntax
+open Utils.Syntax
 
 (* Define a structure that will save variable names and their values. Equivalent to Map.Make(String) *)
 module Environment = Map.Make(struct 
@@ -56,6 +56,13 @@ let runtime_error message = raise (Runtime_error message)
   | Less (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VBool (a < b)
     | _ -> assert false)
+
+  | If (cond, e1, e2) -> (
+    match interp env cond with
+    | VBool true -> interp env e1
+    | VBool false -> interp env e2
+    | _ -> assert false
+  )
 
   | Pair (e1, e2) -> VPair (interp env e1, interp env e2)
   | Split (pair, name1, name2, expr) -> 

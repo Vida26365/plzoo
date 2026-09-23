@@ -11,6 +11,7 @@
 %token SPLIT TO IN LET
 %token MATCH WITH INL INR ALTERNATIVE
 %token LAMBDA
+%token IF THEN ELSE
 %token FST SND
 %token TYPE_INT BOOL LOLLI AMP
 %token EOF
@@ -56,6 +57,8 @@ plain_expr:
   { Fun (x, t, e) }
   | MATCH scrut = expr WITH INL x = VAR EQUAL left = expr ALTERNATIVE INR y = VAR EQUAL right = expr
     { Match (scrut, x, left, y, right) }
+  | IF cond = expr THEN e1 = expr ELSE e2 = expr
+    { If (cond, e1, e2) }
   | SPLIT pair = expr TO x = VAR y = VAR IN body = expr
     { Split (pair, x, y, body) }
   | INL e = expr
