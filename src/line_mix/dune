@@ -1,0 +1,11 @@
+(executable
+ (name line_mix)
+ (libraries zoo utils)
+ (promote
+  (until-clean)
+  (into ../..)))
+
+(menhir
+  (modules parser))
+
+(ocamllex lexer)

@@ -15,9 +15,9 @@ rule token = parse
   | "false"         { FALSE }
 
   | "Int"           { TYPE_INT }
-  | "Bool"          { BOOL }
+  | "Bool"          { TYPE_BOOL }
+  | "Arr"           { TYPE_ARR }
 
-  (* | "bundle"        { BUNDLE } *)
   | "fst"           { FST }
   | "snd"           { SND }
 
@@ -28,19 +28,20 @@ rule token = parse
   | "inl"           { INL }
   | "inr"           { INR }
 
-  | "split"         {SPLIT}
-  | "to"            { TO }
-  | "in"            { IN }
-
-  | "lambda"        { LAMBDA }
+  | "fun"           { FUN }
 
   | "if"            { IF }
   | "then"          { THEN }
   | "else"          { ELSE }
+
+  | "make"          { MAKE }
+  | "length"        { LENGTH }
+  | "lookup"        { LOOKUP }
+  | "set"           { SET }
   
 
 
-  
+  | "!"             { BANG }
   | '%'             { MOD }
   | '&'             { AMP }
   | '('             { LPAREN }
@@ -49,6 +50,7 @@ rule token = parse
   | '+'             { PLUS }
   | ','             { COMMA }
   | "-o"            { LOLLI }
+  | "->"            { ARROW }
   | '-'             { MINUS }
   | '/'             { DIVIDE }
   | '<'             { LESS }
@@ -56,6 +58,8 @@ rule token = parse
   | '|'             { ALTERNATIVE }
   | ':'             { COLON }
   | ';'             { SEMICOLON }
+  | '['             { LBRACKET } 
+  | ']'             { RBRACKET }
   | var             { VAR (lexeme lexbuf) }  (* Zakaj je to *)
   | eof             { EOF }
 

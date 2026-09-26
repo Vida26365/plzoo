@@ -34,3 +34,10 @@ let exec _ _ = initial_environment (* TODO *)
 - datoteke
 - inti so nelinearni
 - klicaj
+
+
+
+
+let sumT = if 5 < 6 then inl 1 else inr (2, 3);
+
+match sumT with inl x = x | inr pair = (split pair to a b in a*b);

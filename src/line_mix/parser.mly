@@ -1,28 +1,32 @@
 %{
-  open Utils.Syntax
+  open Syntax
 %}
 
-%token <Utils.Syntax.name> VAR
+%token <Syntax.name> VAR
 %token <int> INT
 %token TRUE FALSE
+
 %token PLUS MINUS TIMES DIVIDE MOD EQUAL LESS
+
 %token COMMA COLON SEMICOLON
-%token LPAREN RPAREN
-%token SPLIT TO IN LET
+%token LPAREN RPAREN LBRACKET RBRACKET
+%token BANG
+%token LET
 %token MATCH WITH INL INR ALTERNATIVE
-%token LAMBDA
+%token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
-%token TYPE_INT BOOL LOLLI AMP
+%token MAKE LENGTH LOOKUP SET
+%token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
 %token EOF
 
 %start file
-%type <Utils.Syntax.toplevel_cmd list> file
+%type <Syntax.toplevel_cmd list> file
 
 %start toplevel
-%type <Utils.Syntax.toplevel_cmd> toplevel
+%type <Syntax.toplevel_cmd> toplevel
 
-%type <Utils.Syntax.ltype> ltype
+%type <Syntax.ltype> ltype
 
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
@@ -55,21 +59,36 @@ plain_expr:
     { Bool false }
   | x = VAR
     { Var x }
-  | LAMBDA x = VAR COLON t = ltype IN e = expr
+  | BANG e = expr
+    { Bang e }
+
+  | MAKE n = atom_expr e = expr
+    { Make (n, e) }
+  | LENGTH a = atom_expr
+    { Length a }
+  | LOOKUP a = atom_expr i = atom_expr
+    { Lookup (a, i) }
+  | SET a = atom_expr i = atom_expr v = atom_expr
+    { Set (a, i, v) }
+
+
+  | FUN x = VAR COLON t = ltype ARROW e = expr
   { Fun (x, t, e) }
-  | MATCH scrut = expr WITH INL x = VAR EQUAL left = expr ALTERNATIVE INR y = VAR EQUAL right = expr
+  | MATCH scrut = expr WITH INL x = VAR ARROW left = expr ALTERNATIVE INR y = VAR ARROW right = expr
     { Match (scrut, x, left, y, right) }
   | IF cond = expr THEN e1 = expr ELSE e2 = expr
     { If (cond, e1, e2) }
-  | SPLIT pair = expr TO x = VAR y = VAR IN body = expr
+  | MATCH pair = expr WITH x = VAR COMMA y = VAR ARROW body = expr
     { Split (pair, x, y, body) }
-  | INL e = expr
+  | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
+    { Split (pair, x, y, body) }
+  | INL e = atom_expr
     { Inl e }
-  | INR e = expr
+  | INR e = atom_expr
     { Inr e }
-  | FST e = expr
+  | FST e = atom_expr
     { Fst e }
-  | SND e = expr
+  | SND e = atom_expr
     { Snd e }
   | e1 = expr AMP e2 = expr
     { Bundle (e1, e2) }
@@ -91,6 +110,8 @@ plain_expr:
     { Apply (f, a) }
   | e = app_expr
     { e }
+  | BANG e = expr
+    { Bang e }
 
 app_expr:
   | e = atom_expr
@@ -113,6 +134,12 @@ atom_expr:
     { Bool true }
   | FALSE
     { Bool false }
+  | BANG e = atom_expr
+    { Bang e }
+  | LBRACKET es = separated_list(COMMA, expr) RBRACKET
+    { Array es }
+
+
 
 (* Types, from loosest to tightest binding: s -o t (right assoc) ; s + t ; s & t ; s * t *)
 ltype:
@@ -142,7 +169,10 @@ tensor_type:
 atom_type:
   | TYPE_INT
     { LInt }
-  | BOOL
+  | TYPE_BOOL
     { LBool }
+  | TYPE_ARR n = atom_expr t = atom_type
+    { LArr (n, t) }
   | LPAREN t = ltype RPAREN
     { t }
+

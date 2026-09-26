@@ -11,13 +11,14 @@ type ltype =
   | LAnd of ltype * ltype (** tensor (multiplicative conjunction) [s ⊗ t] *)
   | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
   | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
-  (* | LPar of ltype * ltype *)
+  | LArr of expr * ltype (** Array type [arr n t] *)
 
 
-type expr =
+and expr =
   | Var of name           (** variable *)
   | Int of int            (** integer constant *)
   | Bool of bool          (** boolean constant *)
+
   | Times of expr * expr  (** product [e1 * e2] *)
   | Divide of expr * expr (** quotient [e1 / e2] *)
   | Mod of expr * expr    (** remainder [e1 % e2] *)
@@ -25,8 +26,10 @@ type expr =
   | Minus of expr * expr  (** difference [e1 - e2] *)
   | Equal of expr * expr
   | Less of expr * expr
-
+  
   | If of expr * expr * expr (** conditional [if e1 then e2 else e3] *)
+  
+  | Bang of expr          (** bang [!e]*)
 
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
@@ -44,6 +47,11 @@ type expr =
 
   | Annot of expr * ltype (** type ascription [(e : t)] *)
 
+  | Array of expr list (** array [e1, e2, e3, ... , en]*)
+  | Make of expr * expr (** make array [ e, e, e, ... , e]*)
+  | Length of expr (** length of array [length e]*)
+  | Lookup of expr * expr (** lookup in array [e1[e2]]*)
+  | Set of expr * expr * expr (** set in array [e1[e2] = e3]*)
 
 
 (** Toplevel commands *)

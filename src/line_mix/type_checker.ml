@@ -16,7 +16,7 @@
     ever run), and must leave behind the *same* leftover
     ([require_same_leftovers]). *)
 
-open Utils.Syntax
+open Syntax
 
 let typing_error fmt = Zoo.error ~kind:"Type error" fmt
 let linear_error fmt = Zoo.error ~kind:"Linear error" fmt
@@ -89,6 +89,8 @@ let rec infer ctx e : ltype * context =
     let ctx1 = check ctx LInt e1 in
     let ctx2 = check ctx1 LInt e2 in
     LBool, ctx2
+
+    
 
   | Pair (e1, e2) ->
     let ty1, ctx1 = infer ctx e1 in
