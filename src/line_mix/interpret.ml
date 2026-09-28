@@ -20,6 +20,7 @@ type value =
   | VWith of environment * expr * expr 
   | VFun of environment * name * expr (* This form is needed for application. Name serves for a name of a variable that will get substituted on apply. It can be done with VClosure, but it is easier with VFun*)
   | VArr of value * value array
+  | VRecFun of environment * name * name * expr (* recursive function: environment, function name, argument name, body *)
 
 and environment = value Environment.t
 
@@ -36,7 +37,7 @@ let rec str_of_value = function
   | VInl x -> "inl " ^ str_of_value x
   | VInr x -> "inr " ^ str_of_value x
   | VWith _ -> "< & >"
-  | VFun _ -> "<fun>"
+  | VFun _ | VRecFun _ -> "<fun>"
   | VArr (_, arr) -> (
     let string_of_value_array arr =
     let elements = Array.to_list arr |> List.map str_of_value in
@@ -100,6 +101,10 @@ let rec str_of_value = function
     match interp env f with
     | VFun (env', name_x, expr) -> (
       let env'' = Environment.add name_x (interp env a) env' in
+      interp env'' expr
+    )
+    | VRecFun (env', name_f, name_x, expr) as v -> (
+      let env'' = Environment.add name_x (interp env a) (Environment.add name_f v env') in
       interp env'' expr
     )
     | _ -> assert false
@@ -186,3 +191,8 @@ let rec str_of_value = function
     )
     | Promote e -> interp env e
 
+
+(** Turns the value of [e] in [let rec f : t = e] into a function that can call itself as [f]. *)
+let make_rec f = function
+  | VFun (env, x, body) -> VRecFun (env, f, x, body)
+  | _ -> runtime_error "let rec expects a function"

@@ -1,0 +1,2 @@
+Type error: the branches have types !Int and !Bool, which are not compatible
+[exit 1]

@@ -11,7 +11,7 @@
 %token COMMA COLON SEMICOLON
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG
-%token LET
+%token LET REC
 %token MATCH WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
@@ -45,6 +45,8 @@ toplevel:
     { Def (x, e) }
   | LET x = VAR COLON t = ltype EQUAL e = expr SEMICOLON
     { Def (x, Annot (e, t)) }
+  | LET REC x = VAR COLON t = ltype EQUAL e = expr SEMICOLON
+    { DefRec (x, t, e) }
   | e = expr SEMICOLON
     { Expr e }
 
@@ -171,8 +173,8 @@ atom_type:
     { LBool }
   | BANG t = atom_type
     { LBang t }
-  | TYPE_ARR n = atom_expr t = atom_type
-    { LArr (n, t) }
+  | TYPE_ARR t = atom_type
+    { LArr t }
   | LPAREN t = ltype RPAREN
     { t }
 

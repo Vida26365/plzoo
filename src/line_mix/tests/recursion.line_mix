@@ -1,0 +1,19 @@
+# a recursive function must be promoted, since it is used in its own body and afterwards
+let rec fact : !(!Int -o !Int) =
+  !(fun n : !Int -> if n = 0 then 1 else n * fact (n - 1));
+fact 5;
+fact 10;
+
+let rec fib : !(!Int -o !Int) =
+  !(fun n : !Int -> if n < 2 then n else fib (n - 1) + fib (n - 2));
+fib 10;
+
+# recursive functions can call other promoted functions
+let double = !(fun n : !Int -> n + n);
+let rec pow2 : !(!Int -o !Int) =
+  !(fun n : !Int -> if n = 0 then 1 else double (pow2 (n - 1)));
+pow2 8;
+
+# a recursive function can be redefined, since it is unrestricted
+let rec fact : !(!Int -o !Int) = !(fun n : !Int -> n);
+fact 5;

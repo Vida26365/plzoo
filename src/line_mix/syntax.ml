@@ -11,7 +11,7 @@ type ltype =
   | LAnd of ltype * ltype (** tensor (multiplicative conjunction) [s ⊗ t] *)
   | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
   | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
-  | LArr of expr * ltype (** Array type [arr n t] *)
+  | LArr of ltype (** Array type [arr t] *)
   | LBang of ltype (** bang type [!t] *)
 
 
@@ -60,5 +60,6 @@ and expr =
 type toplevel_cmd =
   | Expr of expr       (** an expression to be evaluated *)
   | Def of name * expr (** toplevel definition [let x = e] *)
+  | DefRec of name * ltype * expr (** recursive toplevel definition [let rec f : t = e] *)
   | Quit               (* exit toplevel [$quit] *)
 

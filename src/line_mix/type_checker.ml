@@ -23,13 +23,33 @@ let rec string_of_ltype = function
   | LAnd (t1, t2) -> Printf.sprintf "(%s * %s)" (string_of_ltype t1) (string_of_ltype t2)
   | LWith (t1, t2) -> Printf.sprintf "(%s & %s)" (string_of_ltype t1) (string_of_ltype t2)
   | LPlus (t1, t2) -> Printf.sprintf "(%s + %s)" (string_of_ltype t1) (string_of_ltype t2)
-  | LArr (_, t) -> Printf.sprintf "(%s Array)" (string_of_ltype t)
+  | LArr t -> Printf.sprintf "(%s Array)" (string_of_ltype t)
 
 
 
 let is_bang_type = function
   | LBang _ -> true
   | _ -> false
+
+(** [subtype a b] holds when a value of type [a] can be used where [b] is expected ([!t] can be used as [t]). *)
+let rec subtype a b =
+  a = b ||
+  match a, b with
+  | LBang a', LBang b' -> subtype a' b'
+  | LBang a', _ -> subtype a' b
+  | LAnd (a1, a2), LAnd (b1, b2)
+  | LWith (a1, a2), LWith (b1, b2)
+  | LPlus (a1, a2), LPlus (b1, b2) -> subtype a1 b1 && subtype a2 b2
+  | LArr a', LArr b' -> subtype a' b'
+  | LLolli (a1, a2), LLolli (b1, b2) -> subtype b1 a1 && subtype a2 b2
+  | _ -> false
+
+(** The common type of two branches: the less restrictive of the two. *)
+let join a b =
+  if subtype a b then b
+  else if subtype b a then a
+  else typing_error "the branches have types %s and %s, which are not compatible"
+         (string_of_ltype a) (string_of_ltype b)
 
 (** Type of a toplevel [let x = e]. Without an annotation base values are unrestricted ([!Int], [!Bool]),
     with an annotation [let x : t = e] the type is exactly [t]. *)
@@ -123,9 +143,11 @@ let rec check ctx ty e : context =
     require_no_linear_used ctx ctx' ;
     ctx'
 
+  | Array es, LArr t -> List.fold_left (fun ctx e -> check ctx t e) ctx es
+
   | _, _ ->
     let ty', ctx' = infer ctx e in
-    if ty' <> ty && ty' <> LBang ty then
+    if not (subtype ty' ty) then
       typing_error "this expression has type %s but is used as if it has type %s"
         (string_of_ltype ty') (string_of_ltype ty)
     else
@@ -139,8 +161,8 @@ and infer ctx e : ltype * context =
     | Some ty -> ty, if is_bang_type ty then ctx else Context.remove name ctx
     | None -> typing_error "unbound variable %s." name
   )
-  | Int _ -> LInt, ctx
-  | Bool _ -> LBool, ctx
+  | Int _ -> LBang LInt, ctx
+  | Bool _ -> LBang LBool, ctx
   | Times (e1, e2) | Divide (e1, e2) | Mod (e1, e2)| Plus (e1, e2) | Minus (e1, e2) -> (
     let aux ctx' = match infer ctx' e2 with
     | LBang LInt, ctx2 -> LBang LInt, ctx2
@@ -168,9 +190,9 @@ and infer ctx e : ltype * context =
       | ty, _ -> typing_error "this expression has type %s but is used as if it has type !Bool or Bool" (string_of_ltype ty) ;
     in
     let ty1, ctx_left = infer ctx1 e1 in
-    let ctx_right = check ctx1 ty1 e2 in
+    let ty2, ctx_right = infer ctx1 e2 in
     require_same_context ctx_left ctx_right ;
-    ty1, ctx_left
+    join ty1 ty2, ctx_left
   )
   | Pair (e1, e2) -> (
     let ty1, ctx1 = infer ctx e1 in
@@ -212,9 +234,9 @@ and infer ctx e : ltype * context =
     match infer ctx scrut with
     | LPlus (ta, tb), ctx1 -> (
       let ty1, ctx_left = f_with_added_var_in_ctx ctx1 x ta (fun ctx -> infer ctx e1) in
-      let _, ctx_right = f_with_added_var_in_ctx ctx1 y tb (fun ctx -> (), check ctx ty1 e2) in
+      let ty2, ctx_right = f_with_added_var_in_ctx ctx1 y tb (fun ctx -> infer ctx e2) in
       require_same_context ctx_left ctx_right ;
-      ty1, ctx_left
+      join ty1 ty2, ctx_left
     )
     | ty, _ -> typing_error "this expression has type %s but match expects a" (string_of_ltype ty)
   )
@@ -225,14 +247,14 @@ and infer ctx e : ltype * context =
     require_same_context ctx1 ctx2 ;
     LWith (ty1, ty2), ctx1
   )
-  | Fst e' -> (
-    match infer ctx e' with
+  | Fst e -> (
+    match infer ctx e with
      | LWith (ta, _), ctx' -> ta, ctx'
      | ty, _ ->
        typing_error "this expression has type %s but fst expects a with-pair s & t" (string_of_ltype ty)
   )
-  | Snd e' -> (
-    match infer ctx e' with
+  | Snd e -> (
+    match infer ctx e with
      | LWith (_, tb), ctx' -> tb, ctx'
      | ty, _ ->
        typing_error "this expression has type %s but snd expects a with-pair s & t" (string_of_ltype ty)
@@ -245,7 +267,7 @@ and infer ctx e : ltype * context =
     | e::es -> (
       let ty, ctx' = infer ctx e in
       let rec aux ctx'' = function
-        | [] -> LArr (Int (List.length lst), ty), ctx''
+        | [] -> LArr ty, ctx''
         | e::es -> (
           let ctx''' = check ctx'' ty e in
           aux ctx''' es
@@ -257,7 +279,9 @@ and infer ctx e : ltype * context =
   | Make (n, e) -> (
       let ctx' = assure_int ctx n in
       let ty, ctx'' = infer ctx' e in
-      LArr (n, ty), ctx''
+      if not (is_bang_type ty) then
+        typing_error "make copies its element, so it must have type !t, but it has type %s" (string_of_ltype ty) ;
+      LArr ty, ctx''
   )
   | Length e -> (
     match infer ctx e with
@@ -267,15 +291,15 @@ and infer ctx e : ltype * context =
   | Lookup (a, i) -> (
     let ctx' = assure_int ctx i in
     match infer ctx' a with
-    | LArr (_, ty), ctx'' -> ty, ctx''
+    | LArr ty, ctx'' -> ty, ctx''
     | ty, _ -> typing_error "this expression has type %s but is used as if it has type Array" (string_of_ltype ty)
   )
   | Set (a, i, v) -> (
     let ctx' = assure_int ctx i in
     match infer ctx' a with
-    | LArr (n, ty), ctx'' ->(
+    | LArr ty, ctx'' ->(
       let ctx''' = check ctx'' ty v in
-      LArr (n, ty), ctx'''
+      LArr ty, ctx'''
     )
     | ty, _ -> typing_error "this expression has type %s but is used as if it has type Array" (string_of_ltype ty)
   )
@@ -287,7 +311,7 @@ and infer ctx e : ltype * context =
   | Promote e -> (
     let ty, ctx' = infer ctx e in
     require_no_linear_used ctx ctx' ;
-    LBang ty, ctx'
+    (match ty with LBang _ -> ty | _ -> LBang ty), ctx'
   )
 
 
@@ -297,3 +321,11 @@ and assure_int ctx e  =
     | LBang LInt, ctx' -> ctx'
     | ty, _ -> typing_error "this expression has type %s but is used as if it has type !Int or Int" (string_of_ltype ty)
 
+
+
+(** [let rec f : t = e]: while [e] is checked, [f : t] is in the context. [t] must be [!(s -o t)]. *)
+let check_rec ctx f ty e =
+  match ty with
+  | LBang (LLolli _) -> check (define ctx f ty) ty e
+  | _ -> typing_error "a recursive function must have a type of the form !(s -o t), but it has type %s"
+           (string_of_ltype ty)

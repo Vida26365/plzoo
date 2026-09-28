@@ -1,0 +1,9 @@
+# the type of if / match is the common type of both branches, not the type of the first one
+let f = !(fun n : Int -> n + 1);
+if true then 1 else f 2;
+if true then f 2 else 1;
+if true then 1 else 2;
+let t : Bool + Int = inr 3;
+match t with inl c -> if c then 1 else 0 | inr n -> n;
+let u : Int + Int = inl 4;
+match u with inl a -> a + 1 | inr b -> b;

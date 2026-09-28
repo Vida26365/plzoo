@@ -1,0 +1,2 @@
+let x : Int = 1;
+make 3 x;

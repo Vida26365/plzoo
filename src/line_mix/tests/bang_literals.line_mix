@@ -1,0 +1,14 @@
+# number and boolean literals are unrestricted: !Int and !Bool
+let a = 6;
+a + 1;
+1 + 2;
+if true then 1 else 2;
+1 < 2;
+# an annotation makes the value linear
+let b : Int = 5;
+b + 1;
+(fun x : Int -> x) 3;
+# an annotated array of linear Ints
+let arr : Arr Int = [1, 2, 3];
+length arr;
+!5;

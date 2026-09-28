@@ -21,7 +21,8 @@ rule token = parse
   | "fst"           { FST }
   | "snd"           { SND }
 
-  | "let"           { LET } 
+  | "let"           { LET }
+  | "rec"           { REC }
 
   | "match"         { MATCH }
   | "with"          { WITH }

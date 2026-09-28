@@ -1,0 +1,1 @@
+let rec f : Int -o Int = fun n : Int -> n;

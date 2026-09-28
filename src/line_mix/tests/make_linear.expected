@@ -1,0 +1,3 @@
+x : Int
+Type error: make copies its element, so it must have type !t, but it has type Int
+[exit 1]

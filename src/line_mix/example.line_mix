@@ -3,23 +3,22 @@
 # Comments start with # and last until the end of the line. Every command ends with ;
 
 
+
+
+
 # ---------- Numbers and arithmetic ----------
 
+# Some examples of arithmetic
+
 1 + 2;
-10 - 4;
-6 * 7;
 20 / 3;
 20 % 3;
-2 + 3 * 4;
-(2 + 3) * 4;
 -5 + 2;
 
 
 # ---------- Booleans, comparisons and conditionals ----------
 
 true;
-false;
-1 < 2;
 3 = 4;
 if 1 < 2 then 10 else 20;
 
@@ -31,7 +30,7 @@ let a = 6;
 a + a * a;
 
 # A !Int variable can also be redefined.
-let a = 7;
+let a  = 7;
 a;
 
 # With an annotation, the variable has exactly that type. Int is linear, so it must be used exactly once.
@@ -86,6 +85,15 @@ twice 4;
 match !7 with !x -> x + x;
 
 
+# ---------- Recursive functions  !(s -o t) ----------
+# Needs complete type annotation
+
+let rec count :!(!Int -o !Int) = !(fun x : !Int -> if x < 10 then count (x + 1) else 10);
+count 11;
+
+
+
+
 # ---------- Tensor pairs  s * t ----------
 
 # Both components of a pair must be used.
@@ -108,12 +116,13 @@ match s with inl n -> n + 1 | inr c -> if c then 1 else 0;
 # ---------- With  s & t ----------
 
 # Both components are built from the same resources, and only one of them is used.
-let w = 1 & 2;
+let a = 1;
+let w = a & a + 1;
 fst w;
 snd (3 & 4);
 
 
-# ---------- Arrays  Arr n t ----------
+# ---------- Arrays  Arr t ----------
 
 [1, 2, 3];
 make 3 0;
@@ -121,6 +130,6 @@ length [1, 2, 3];
 lookup [10, 20, 30] 1;
 set [10, 20, 30] 1 99;
 
-# The array type: Arr n t is an array of n elements of type t.
-let arr : Arr 3 Int = [1, 2, 3];
+# The array type: Arr t is an array of elements of type t.
+let arr : Arr Int = [1, 2, 3];
 length arr;

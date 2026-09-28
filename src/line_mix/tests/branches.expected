@@ -1,0 +1,8 @@
+f : !(Int -o Int)
+1 : Int
+3 : Int
+1 : !Int
+t : (Bool + Int)
+3 : Int
+u : (Int + Int)
+5 : Int

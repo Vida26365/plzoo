@@ -1,0 +1,10 @@
+fact : !(!Int -o !Int)
+120 : !Int
+3628800 : !Int
+fib : !(!Int -o !Int)
+55 : !Int
+double : !(!Int -o !Int)
+pow2 : !(!Int -o !Int)
+256 : !Int
+fact : !(!Int -o !Int)
+5 : !Int

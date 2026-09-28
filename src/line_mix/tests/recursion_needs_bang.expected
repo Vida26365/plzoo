@@ -1,0 +1,2 @@
+Type error: a recursive function must have a type of the form !(s -o t), but it has type (Int -o Int)
+[exit 1]

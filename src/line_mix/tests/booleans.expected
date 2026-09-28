@@ -1,4 +1,4 @@
-true : Bool
-false : Bool
-1 : Int
-2 : Int
+true : !Bool
+false : !Bool
+1 : !Int
+2 : !Int

@@ -1,0 +1,2 @@
+let b : Int = 1;
+let rec f : !(!Int -o Int) = !(fun n : !Int -> if n = 0 then b else b + f (n - 1));
