@@ -1,0 +1,3 @@
+Syntax error at file "syntax_error.line_mix", line 1, charaters 4-5:
+syntax error
+[exit 1]

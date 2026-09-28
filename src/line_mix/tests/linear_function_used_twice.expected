@@ -1,0 +1,4 @@
+f : (Int -o Int)
+2 : Int
+Type error: unbound variable f.
+[exit 1]

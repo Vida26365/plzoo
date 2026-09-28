@@ -1,0 +1,6 @@
+fun x : Int -> x + 1;
+(fun x : Int -> x + 1) 41;
+(fun x : Int -> fun y : Int -> x - y) 10 3;
+(fun f : Int -o Int -> f 5) (fun n : Int -> n + 1);
+let succ = fun n : Int -> n + 1;
+succ 1;

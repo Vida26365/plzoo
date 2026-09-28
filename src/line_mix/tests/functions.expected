@@ -1,0 +1,6 @@
+<fun> : (Int -o Int)
+42 : Int
+7 : Int
+6 : Int
+succ : (Int -o Int)
+2 : Int

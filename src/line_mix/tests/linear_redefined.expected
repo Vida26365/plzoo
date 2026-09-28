@@ -1,0 +1,3 @@
+c : Int
+Linear error: linear variable c is redefined before it is used
+[exit 1]

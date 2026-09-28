@@ -12,6 +12,7 @@ type ltype =
   | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
   | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
   | LArr of expr * ltype (** Array type [arr n t] *)
+  | LBang of ltype (** bang type [!t] *)
 
 
 and expr =
@@ -29,7 +30,8 @@ and expr =
   
   | If of expr * expr * expr (** conditional [if e1 then e2 else e3] *)
   
-  | Bang of expr          (** bang [!e]*)
+  | Bang of (expr * name * expr)          (** bang [!e]*)
+  | Promote of expr   (** promotion [!e] *)
 
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)

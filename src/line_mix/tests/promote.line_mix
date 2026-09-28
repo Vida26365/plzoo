@@ -1,0 +1,12 @@
+!5;
+(fun x : Int -> x) !3;
+let succ = !(fun n : Int -> n + 1);
+succ 1;
+succ 2;
+let h : !(Int -o Int) = !(fun n : Int -> n * 2);
+h 3;
+h 4;
+let square = !(fun n : !Int -> n * n);
+square !5;
+square !6;
+match !7 with !x -> x + x;

@@ -1,0 +1,3 @@
+(inl 5 : Int + Bool);
+let s : Int + Bool = inr true;
+match s with inl n -> n + 1 | inr c -> if c then 1 else 0;

@@ -1,0 +1,12 @@
+5 : !Int
+3 : Int
+succ : !(Int -o Int)
+2 : Int
+3 : Int
+h : !(Int -o Int)
+6 : Int
+8 : Int
+square : !(!Int -o !Int)
+25 : !Int
+36 : !Int
+14 : !Int

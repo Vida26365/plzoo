@@ -1,0 +1,2 @@
+Type error: cannot infer the type of inl e: add a type annotation, e.g. (inl e : Int + Bool)
+[exit 1]

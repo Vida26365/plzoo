@@ -1,0 +1,126 @@
+# A tour of line_mix: a small language with linear types.
+# Every value of a linear type must be used exactly once. Values of type !t can be used any number of times.
+# Comments start with # and last until the end of the line. Every command ends with ;
+
+
+# ---------- Numbers and arithmetic ----------
+
+1 + 2;
+10 - 4;
+6 * 7;
+20 / 3;
+20 % 3;
+2 + 3 * 4;
+(2 + 3) * 4;
+-5 + 2;
+
+
+# ---------- Booleans, comparisons and conditionals ----------
+
+true;
+false;
+1 < 2;
+3 = 4;
+if 1 < 2 then 10 else 20;
+
+
+# ---------- Definitions: unrestricted and linear ----------
+
+# Without an annotation, a number is unrestricted (!Int) and can be used many times.
+let a = 6;
+a + a * a;
+
+# A !Int variable can also be redefined.
+let a = 7;
+a;
+
+# With an annotation, the variable has exactly that type. Int is linear, so it must be used exactly once.
+let b : Int = 5;
+b + 1;
+
+# Type ascription on an expression.
+(5 : Int);
+
+
+# ---------- Linear functions  s -o t ----------
+
+# A function must use its argument exactly once.
+fun x : Int -> x + 1;
+(fun x : Int -> x + 1) 41;
+
+# Curried functions.
+(fun x : Int -> fun y : Int -> x - y) 10 3;
+
+# Higher-order functions.
+(fun f : Int -o Int -> f 5) (fun n : Int -> n + 1);
+
+# A plain function is itself linear: it disappears after one call.
+let succ = fun n : Int -> n + 1;
+succ 41;
+
+
+# ---------- Promotion !e: reusable values ----------
+
+# !e has type !t. It may not use any linear variables.
+!5;
+
+# A !t can be used where a t is expected.
+(fun x : Int -> x) !3;
+
+# A reusable function can be called many times.
+let inc = !(fun n : Int -> n + 1);
+inc 1;
+inc 2;
+
+# An argument of type !Int may be used many times inside the function.
+let square = !(fun n : !Int -> n * n);
+square !5;
+square a;
+
+# The type of a reusable function can be written explicitly.
+let twice : !(Int -o Int) = !(fun n : Int -> n * 2);
+twice 3;
+twice 4;
+
+# Taking a ! value apart: x is unrestricted in the body.
+match !7 with !x -> x + x;
+
+
+# ---------- Tensor pairs  s * t ----------
+
+# Both components of a pair must be used.
+(1, true);
+let p = (3, 4);
+match p with (x, y) -> x * y;
+match (1, 2) with x, y -> x + y;
+
+
+# ---------- Sums  s + t ----------
+
+# inl and inr need a type annotation.
+(inl 5 : Int + Bool);
+let s : Int + Bool = inr true;
+
+# Both branches must use the same resources.
+match s with inl n -> n + 1 | inr c -> if c then 1 else 0;
+
+
+# ---------- With  s & t ----------
+
+# Both components are built from the same resources, and only one of them is used.
+let w = 1 & 2;
+fst w;
+snd (3 & 4);
+
+
+# ---------- Arrays  Arr n t ----------
+
+[1, 2, 3];
+make 3 0;
+length [1, 2, 3];
+lookup [10, 20, 30] 1;
+set [10, 20, 30] 1 99;
+
+# The array type: Arr n t is an array of n elements of type t.
+let arr : Arr 3 Int = [1, 2, 3];
+length arr;

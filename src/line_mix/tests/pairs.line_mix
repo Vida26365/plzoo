@@ -1,0 +1,4 @@
+(1, true);
+let p = (3, 4);
+match p with (x, y) -> x * y;
+match (1, 2) with x, y -> x + y;

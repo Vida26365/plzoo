@@ -72,7 +72,7 @@ let rec str_of_value = function
     | VInt a, VInt b -> VInt (a - b)
     | _ -> assert false)
   | Equal (e1, e2) -> (match interp env e1, interp env e2 with 
-    | VInt a, VInt b -> VBool (a == b)
+    | VInt a, VInt b -> VBool (a = b)
     | _ -> assert false)
   | Less (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VBool (a < b)
@@ -147,11 +147,20 @@ let rec str_of_value = function
     | VArr (n, _) -> n
     | _ -> assert false
     )
-  | Lookup (earr, i) -> (match interp env earr with
-    | VArr (_, varr) -> Array.get varr (match interp env i with
-      | VInt k -> k
-      | _ -> assert false)
+  | Lookup (earr, i) -> (
+    let varr = match interp env earr with
+    | VArr (_, varr) -> varr
     | _ -> assert false
+    in
+    let k = match interp env i with
+      | VInt k -> k
+      | _ -> assert false
+    in
+    if not (0 <= k && k < (Array.length varr))
+        then
+          index_error "Array index out of range"
+        else 
+      Array.get varr k
     )
     | Set (earr, i, expr) -> (
       let varr = match interp env earr with
@@ -162,8 +171,18 @@ let rec str_of_value = function
         | VInt i -> i
         | _ -> assert false
       in
-      Array.set varr k (interp env expr);
-      VArr (VInt (Array.length varr), varr)
+      if not (0 <= k && k < (Array.length varr))
+        then
+          index_error "Array index out of range"
+        else 
+          Array.set varr k (interp env expr);
+          VArr (VInt (Array.length varr), varr)
+        
     )
-  | Bang expr -> interp env expr
+    | Bang (expr, name, body) -> (
+      let value = interp env expr in
+      let env' = Environment.add name value env in
+      interp env' body
+    )
+    | Promote e -> interp env e
 

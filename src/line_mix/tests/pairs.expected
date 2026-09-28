@@ -1,0 +1,4 @@
+(1, true) : (Int * Bool)
+p : (Int * Int)
+12 : Int
+3 : Int

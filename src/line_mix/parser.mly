@@ -59,8 +59,6 @@ plain_expr:
     { Bool false }
   | x = VAR
     { Var x }
-  | BANG e = expr
-    { Bang e }
 
   | MAKE n = atom_expr e = expr
     { Make (n, e) }
@@ -82,6 +80,8 @@ plain_expr:
     { Split (pair, x, y, body) }
   | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
     { Split (pair, x, y, body) }
+  | MATCH term = expr WITH BANG x = VAR ARROW body = expr
+    { Bang (term, x, body) }
   | INL e = atom_expr
     { Inl e }
   | INR e = atom_expr
@@ -110,8 +110,6 @@ plain_expr:
     { Apply (f, a) }
   | e = app_expr
     { e }
-  | BANG e = expr
-    { Bang e }
 
 app_expr:
   | e = atom_expr
@@ -134,10 +132,10 @@ atom_expr:
     { Bool true }
   | FALSE
     { Bool false }
-  | BANG e = atom_expr
-    { Bang e }
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET
     { Array es }
+  | BANG e = atom_expr
+    { Promote e }
 
 
 
@@ -171,6 +169,8 @@ atom_type:
     { LInt }
   | TYPE_BOOL
     { LBool }
+  | BANG t = atom_type
+    { LBang t }
   | TYPE_ARR n = atom_expr t = atom_type
     { LArr (n, t) }
   | LPAREN t = ltype RPAREN

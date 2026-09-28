@@ -1,0 +1,5 @@
+# a plain let gives an unrestricted !Int that can be used many times
+let a = 6;
+a + a * a;
+let a = 7;
+a;

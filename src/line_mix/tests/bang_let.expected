@@ -1,0 +1,4 @@
+a : !Int
+42 : !Int
+a : !Int
+7 : !Int
