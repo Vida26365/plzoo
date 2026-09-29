@@ -133,3 +133,58 @@ set [10, 20, 30] 1 99;
 # The array type: Arr t is an array of elements of type t.
 let arr : Arr Int = [1, 2, 3];
 length arr;
+
+
+# ---------- Strings  Str ----------
+
+# A string literal has type !Str, so it can be used many times.
+"hello";
+let greeting = "hello";
+greeting ^ ", " ^ greeting;
+
+# Escapes such as \n and \t work inside strings.
+"line one\nline two";
+
+# With an annotation a string is linear, like an Int.
+let name : Str = "line_mix";
+"Hi, " ^ name;
+
+
+# ---------- Local definitions  let x = e1 in e2 ----------
+
+let x = 3 in x * x;
+# m has type Int, which is linear, so it is used only once.
+(fun n : Int -> let m = n + 1 in m * 2) 4;
+
+# () is the only value of type !Unit. It can be thrown away.
+();
+
+
+# ---------- Files  File ----------
+
+# A file handle is linear: it must be used exactly once, so every file has to be closed exactly once.
+#   open  : Str -o File           (creates the file if needed and keeps its contents)
+#   write : File -o Str -o File   (the first write after open replaces the contents, later ones append)
+#   read  : File -o Str * File    (the whole contents)
+#   close : File -o !Unit
+# Every write and read gives back a new handle, which is used for the next operation.
+
+let f = open "example_output.txt";
+let f = write f "first line\n";
+let f = write f ("second" ^ " line\n");
+
+# read returns the contents and the handle. let _ = close f in ... closes the handle and returns s.
+match read f with (s, f) -> let _ = close f in s;
+
+# A function that reads the old contents, replaces them and closes the handle.
+# The handle never escapes, and it is closed at the end.
+let replace = fun f : File ->
+  match read f with (old, f) ->
+    match read (write f "replaced\n") with (new, f) ->
+      let _ = close f in old ^ "became " ^ new;
+replace (open "example_output.txt");
+
+# These are rejected by the type checker:
+#   fun f : File -> 5;                          f is never closed
+#   fun f : File -> let u = close f in close f; f is closed twice
+#   !(open "a.txt");                            a file cannot be made unrestricted

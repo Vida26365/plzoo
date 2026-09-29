@@ -1,0 +1,7 @@
+let f = open "files_reopen_replaces.tmp";
+let f = write f "A";
+close f;
+
+let f = open "files_reopen_replaces.tmp";
+let f = write f "B";
+match read f with (s, f) -> let u = close f in s;

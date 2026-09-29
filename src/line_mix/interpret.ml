@@ -27,13 +27,18 @@ type value =
 
 and environment = value Environment.t
 
-(** An open file handle. Writes are appended to [path] through [oc]. *)
-and file = { path : string; oc : out_channel }
+(** An open file handle. [oc] is created by the first write, which empties the file.
+    Later writes on the same handle are appended. Mutating it is safe, since a file is linear. *)
+and file = { path : string; mutable oc : out_channel option; mutable closed : bool }
 
 
 exception Runtime_error of string
 let runtime_error message = raise (Runtime_error message)
 let index_error message = raise (Invalid_argument message)
+
+(** The type checker makes sure a closed file is never used again, this is only a safety net. *)
+let live file =
+  if file.closed then runtime_error ("file " ^ file.path ^ " is already closed")
 
 
 let rec str_of_value = function
@@ -212,7 +217,10 @@ let rec str_of_value = function
     | Open e -> (
       match interp env e with
       | VStr path -> (
-        try VFile { path; oc = open_out_gen [Open_append; Open_creat; Open_text] 0o644 path }
+        (* Create the file if it does not exist, but keep its contents, so that it can be read. *)
+        try
+          close_out (open_out_gen [Open_creat; Open_append; Open_text] 0o644 path) ;
+          VFile { path; oc = None; closed = false }
         with Sys_error msg -> runtime_error msg
       )
       | _ -> assert false
@@ -220,7 +228,8 @@ let rec str_of_value = function
     | Read f -> (
       match interp env f with
       | VFile file as v -> (
-        flush file.oc ;
+        live file ;
+        Option.iter flush file.oc ;
         try VPair (VStr (In_channel.with_open_text file.path In_channel.input_all), v)
         with Sys_error msg -> runtime_error msg
       )
@@ -228,12 +237,30 @@ let rec str_of_value = function
     )
     | Write (f, s) -> (
       match interp env f, interp env s with
-      | (VFile file as v), VStr s -> output_string file.oc s ; v
+      | (VFile file as v), VStr s -> (
+        live file ;
+        let oc = match file.oc with
+          | Some oc -> oc
+          | None -> (
+            (* The first write after open empties the file. *)
+            let oc = try open_out file.path with Sys_error msg -> runtime_error msg in
+            file.oc <- Some oc ;
+            oc
+          )
+        in
+        output_string oc s ;
+        v
+      )
       | _ -> assert false
     )
     | Close f -> (
       match interp env f with
-      | VFile file -> close_out file.oc ; VUnit
+      | VFile file -> (
+        live file ;
+        Option.iter close_out file.oc ;
+        file.closed <- true ;
+        VUnit
+      )
       | _ -> assert false
     )
 
