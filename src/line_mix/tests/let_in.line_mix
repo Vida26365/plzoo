@@ -1,0 +1,5 @@
+let x = 2 in x * x;
+let x = 1 in let y = 2 in x + y;
+(fun n : Int -> let m = n + 1 in m * 2) 4;
+let s = "ab" in s ^ s;
+(let x = 5 in inl x : Int + Bool);

@@ -1,0 +1,1 @@
+let f = (open "file_promote_annot.tmp" : !File);

@@ -1,0 +1,8 @@
+"hello";
+"";
+"tab\there";
+let s = "hello" ^ " " ^ "world";
+s ^ s;
+("a" : Str) ^ "b";
+let t : Str = "linear";
+t ^ "!";

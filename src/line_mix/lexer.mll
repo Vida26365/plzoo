@@ -17,12 +17,16 @@ rule token = parse
   | "Int"           { TYPE_INT }
   | "Bool"          { TYPE_BOOL }
   | "Arr"           { TYPE_ARR }
+  | "Str"           { TYPE_STR }
+  | "Unit"          { TYPE_UNIT }
+  | "File"          { TYPE_FILE }
 
   | "fst"           { FST }
   | "snd"           { SND }
 
   | "let"           { LET }
   | "rec"           { REC }
+  | "in"            { IN }
 
   | "match"         { MATCH }
   | "with"          { WITH }
@@ -39,7 +43,14 @@ rule token = parse
   | "length"        { LENGTH }
   | "lookup"        { LOOKUP }
   | "set"           { SET }
-  
+
+  | "open"          { OPEN }
+  | "read"          { READ }
+  | "write"         { WRITE }
+  | "close"         { CLOSE }
+
+  | '"' ([^ '"' '\n']* as s) '"' { STRING (Scanf.unescaped s) }
+
 
 
   | "!"             { BANG }
@@ -49,6 +60,7 @@ rule token = parse
   | ')'             { RPAREN }
   | '*'             { TIMES }
   | '+'             { PLUS }
+  | '^'             { CARET }
   | ','             { COMMA }
   | "-o"            { LOLLI }
   | "->"            { ARROW }

@@ -26,9 +26,12 @@ else
   for f in *.line_mix; do tests+=("${f%.line_mix}"); done
 fi
 
+# Files written by tests end in .tmp. They are removed around each run, because open appends.
 run() {
+  rm -f ./*.tmp
   "$exe" "$1.line_mix" 2>&1
   code=$?
+  rm -f ./*.tmp
   [ $code -ne 0 ] && echo "[exit $code]"
 }
 

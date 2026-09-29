@@ -1,0 +1,5 @@
+4 : !Int
+3 : !Int
+10 : Int
+"abab" : !Str
+inl 5 : (Int + Bool)

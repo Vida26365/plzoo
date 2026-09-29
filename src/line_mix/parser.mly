@@ -4,20 +4,22 @@
 
 %token <Syntax.name> VAR
 %token <int> INT
+%token <string> STRING
 %token TRUE FALSE
 
-%token PLUS MINUS TIMES DIVIDE MOD EQUAL LESS
+%token PLUS MINUS TIMES DIVIDE MOD EQUAL LESS CARET
 
 %token COMMA COLON SEMICOLON
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG
-%token LET REC
+%token LET REC IN
 %token MATCH WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
 %token MAKE LENGTH LOOKUP SET
-%token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
+%token OPEN READ WRITE CLOSE
+%token TYPE_INT TYPE_BOOL TYPE_ARR TYPE_STR TYPE_UNIT TYPE_FILE LOLLI AMP
 %token EOF
 
 %start file
@@ -28,7 +30,7 @@
 
 %type <Syntax.ltype> ltype
 
-%left PLUS MINUS
+%left PLUS MINUS CARET
 %left TIMES DIVIDE MOD
 %nonassoc EQUAL LESS
 
@@ -71,6 +73,18 @@ plain_expr:
   | SET a = atom_expr i = atom_expr v = atom_expr
     { Set (a, i, v) }
 
+  | OPEN e = atom_expr
+    { Open e }
+  | READ f = atom_expr
+    { Read f }
+  | WRITE f = atom_expr s = atom_expr
+    { Write (f, s) }
+  | CLOSE f = atom_expr
+    { Close f }
+
+  | LET x = VAR EQUAL e1 = expr IN e2 = expr
+    { Let (x, e1, e2) }
+
 
   | FUN x = VAR COLON t = ltype ARROW e = expr
   { Fun (x, t, e) }
@@ -100,6 +114,8 @@ plain_expr:
     { Less (e1, e2) }
   | e1 = expr PLUS e2 = expr
     { Plus (e1, e2) }
+  | e1 = expr CARET e2 = expr
+    { Concat (e1, e2) }
   | e1 = expr MINUS e2 = expr
     { Minus (e1, e2) }
   | e1 = expr TIMES e2 = expr
@@ -134,6 +150,10 @@ atom_expr:
     { Bool true }
   | FALSE
     { Bool false }
+  | s = STRING
+    { String s }
+  | LPAREN RPAREN
+    { Unit }
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET
     { Array es }
   | BANG e = atom_expr
@@ -171,6 +191,12 @@ atom_type:
     { LInt }
   | TYPE_BOOL
     { LBool }
+  | TYPE_STR
+    { LStr }
+  | TYPE_UNIT
+    { LUnit }
+  | TYPE_FILE
+    { LFile }
   | BANG t = atom_type
     { LBang t }
   | TYPE_ARR t = atom_type

@@ -1,0 +1,5 @@
+let f = open "files_toplevel.tmp";
+let f = write f "a";
+let f = write f ("b" ^ "c");
+let p = read f;
+match p with (s, f) -> let u = close f in s;

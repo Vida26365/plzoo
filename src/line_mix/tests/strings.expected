@@ -1,0 +1,8 @@
+"hello" : !Str
+"" : !Str
+"tab\there" : !Str
+s : !Str
+"hello worldhello world" : !Str
+"ab" : Str
+t : Str
+"linear!" : Str

@@ -1,0 +1,2 @@
+let f = open "file_redefined_unused.tmp";
+let f = open "file_redefined_unused.tmp";

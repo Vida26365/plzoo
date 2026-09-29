@@ -1,0 +1,1 @@
+fun f : File -> match read f with (s, g) -> write f s;

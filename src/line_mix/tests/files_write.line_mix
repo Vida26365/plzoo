@@ -1,0 +1,4 @@
+(fun f : File ->
+  match read (write (write f "one\n") "two\n") with (s, f) ->
+    let _ = close f in s)
+  (open "files_write.tmp");

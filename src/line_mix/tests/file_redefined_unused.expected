@@ -1,0 +1,3 @@
+f : File
+Linear error: linear variable f is redefined before it is used
+[exit 1]

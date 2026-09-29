@@ -21,8 +21,14 @@ type value =
   | VFun of environment * name * expr (* This form is needed for application. Name serves for a name of a variable that will get substituted on apply. It can be done with VClosure, but it is easier with VFun*)
   | VArr of value * value array
   | VRecFun of environment * name * name * expr (* recursive function: environment, function name, argument name, body *)
+  | VStr of string
+  | VUnit
+  | VFile of file
 
 and environment = value Environment.t
+
+(** An open file handle. Writes are appended to [path] through [oc]. *)
+and file = { path : string; oc : out_channel }
 
 
 exception Runtime_error of string
@@ -33,6 +39,9 @@ let index_error message = raise (Invalid_argument message)
 let rec str_of_value = function
   | VInt x -> string_of_int x
   | VBool x -> string_of_bool x
+  | VStr s -> "\"" ^ String.escaped s ^ "\""
+  | VUnit -> "()"
+  | VFile f -> "<file " ^ f.path ^ ">"
   | VPair (a, b) -> "(" ^ (str_of_value a) ^ ", " ^ (str_of_value b) ^ ")"
   | VInl x -> "inl " ^ str_of_value x
   | VInr x -> "inr " ^ str_of_value x
@@ -55,6 +64,8 @@ let rec str_of_value = function
     | Some value -> value )
   | Int value -> VInt value
   | Bool value -> VBool value
+  | String s -> VStr s
+  | Unit -> VUnit
   | Times (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VInt (a * b)
     | _ -> assert false)
@@ -78,12 +89,19 @@ let rec str_of_value = function
   | Less (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VBool (a < b)
     | _ -> assert false)
+  | Concat (e1, e2) -> (match interp env e1, interp env e2 with
+    | VStr a, VStr b -> VStr (a ^ b)
+    | _ -> assert false)
 
   | If (cond, e1, e2) -> (
     match interp env cond with
     | VBool true -> interp env e1
     | VBool false -> interp env e2
     | _ -> assert false
+  )
+  | Let (x, e1, e2) -> (
+    let env' = Environment.add x (interp env e1) env in
+    interp env' e2
   )
 
   | Pair (e1, e2) -> VPair (interp env e1, interp env e2)
@@ -190,6 +208,34 @@ let rec str_of_value = function
       interp env' body
     )
     | Promote e -> interp env e
+
+    | Open e -> (
+      match interp env e with
+      | VStr path -> (
+        try VFile { path; oc = open_out_gen [Open_append; Open_creat; Open_text] 0o644 path }
+        with Sys_error msg -> runtime_error msg
+      )
+      | _ -> assert false
+    )
+    | Read f -> (
+      match interp env f with
+      | VFile file as v -> (
+        flush file.oc ;
+        try VPair (VStr (In_channel.with_open_text file.path In_channel.input_all), v)
+        with Sys_error msg -> runtime_error msg
+      )
+      | _ -> assert false
+    )
+    | Write (f, s) -> (
+      match interp env f, interp env s with
+      | (VFile file as v), VStr s -> output_string file.oc s ; v
+      | _ -> assert false
+    )
+    | Close f -> (
+      match interp env f with
+      | VFile file -> close_out file.oc ; VUnit
+      | _ -> assert false
+    )
 
 
 (** Turns the value of [e] in [let rec f : t = e] into a function that can call itself as [f]. *)

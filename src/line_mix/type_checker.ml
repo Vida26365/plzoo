@@ -18,6 +18,9 @@ let define ctx x ty = Context.add x ty ctx
 let rec string_of_ltype = function
   | LInt -> "Int"
   | LBool -> "Bool"
+  | LStr -> "Str"
+  | LUnit -> "Unit"
+  | LFile -> "File"
   | LBang t -> Printf.sprintf "!%s" (string_of_ltype t)
   | LLolli (t1, t2) -> Printf.sprintf "(%s -o %s)" (string_of_ltype t1) (string_of_ltype t2)
   | LAnd (t1, t2) -> Printf.sprintf "(%s * %s)" (string_of_ltype t1) (string_of_ltype t2)
@@ -40,7 +43,7 @@ let rec subtype a b =
   | LAnd (a1, a2), LAnd (b1, b2)
   | LWith (a1, a2), LWith (b1, b2)
   | LPlus (a1, a2), LPlus (b1, b2) -> subtype a1 b1 && subtype a2 b2
-  | LArr a', LArr b' -> subtype a' b'
+| LArr a', LArr b' -> subtype a' b'
   | LLolli (a1, a2), LLolli (b1, b2) -> subtype b1 a1 && subtype a2 b2
   | _ -> false
 
@@ -86,6 +89,18 @@ let require_no_linear_used ctx ctx' =
   Context.iter (fun x ty ->
     if not (is_bang_type ty) && not (Context.mem x ctx') then
       linear_error "!e cannot use the linear variable %s" x) ctx
+
+(** Does a value of this type contain a file handle? *)
+let rec contains_file = function
+  | LFile -> true
+  | LAnd (a, b) | LWith (a, b) | LPlus (a, b) | LLolli (a, b) -> contains_file a || contains_file b
+  | LArr t | LBang t -> contains_file t
+  | LInt | LBool | LStr | LUnit -> false
+
+(** A file handle may not be promoted to [!t], since that would allow closing it twice. *)
+let require_no_file ty =
+  if contains_file ty then
+    linear_error "a value of type %s contains a file, so it cannot be made unrestricted with !" (string_of_ltype ty)
 
 let rec check ctx ty e : context =
   match e, ty with
@@ -138,7 +153,13 @@ let rec check ctx ty e : context =
     let (), ctx' = f_with_added_var_in_ctx ctx x ty1 (fun ctx -> (), check ctx ty2 body) in
     ctx'
 
+  | Let (x, e1, e2), _ ->
+    let ty1, ctx1 = infer ctx e1 in
+    let (), ctx2 = f_with_added_var_in_ctx ctx1 x ty1 (fun ctx -> (), check ctx ty e2) in
+    ctx2
+
   | Promote e', LBang ty' ->
+    require_no_file ty' ;
     let ctx' = check ctx ty' e' in
     require_no_linear_used ctx ctx' ;
     ctx'
@@ -163,6 +184,31 @@ and infer ctx e : ltype * context =
   )
   | Int _ -> LBang LInt, ctx
   | Bool _ -> LBang LBool, ctx
+  | String _ -> LBang LStr, ctx
+  | Unit -> LBang LUnit, ctx
+  | Concat (e1, e2) -> (
+    let ty1, ctx1 = infer ctx e1 in
+    let ty2, ctx2 = infer ctx1 e2 in
+    match ty1, ty2 with
+    | LBang LStr, LBang LStr -> LBang LStr, ctx2
+    | (LStr | LBang LStr), (LStr | LBang LStr) -> LStr, ctx2
+    | (LStr | LBang LStr), ty | ty, _ ->
+      typing_error "this expression has type %s but is used as if it has type !Str or Str" (string_of_ltype ty)
+  )
+  | Let (x, e1, e2) -> (
+    let ty1, ctx1 = infer ctx e1 in
+    f_with_added_var_in_ctx ctx1 x ty1 (fun ctx -> infer ctx e2)
+  )
+  | Open e ->
+    LFile, check ctx LStr e
+  | Read f ->
+    LAnd (LStr, LFile), check ctx LFile f
+  | Write (f, s) -> (
+    let ctx1 = check ctx LFile f in
+    LFile, check ctx1 LStr s
+  )
+  | Close f ->
+    LBang LUnit, check ctx LFile f
   | Times (e1, e2) | Divide (e1, e2) | Mod (e1, e2)| Plus (e1, e2) | Minus (e1, e2) -> (
     let aux ctx' = match infer ctx' e2 with
     | LBang LInt, ctx2 -> LBang LInt, ctx2
@@ -311,6 +357,7 @@ and infer ctx e : ltype * context =
   | Promote e -> (
     let ty, ctx' = infer ctx e in
     require_no_linear_used ctx ctx' ;
+    require_no_file ty ;
     (match ty with LBang _ -> ty | _ -> LBang ty), ctx'
   )
 

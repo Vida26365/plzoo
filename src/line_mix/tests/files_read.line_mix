@@ -1,0 +1,2 @@
+let f = open "files_input.txt";
+match read f with (s, f) -> let _ = close f in s;

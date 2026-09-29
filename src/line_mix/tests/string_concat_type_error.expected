@@ -1,0 +1,2 @@
+Type error: this expression has type !Int but is used as if it has type !Str or Str
+[exit 1]

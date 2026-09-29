@@ -1,0 +1,5 @@
+f : File
+f : File
+f : File
+p : (Str * File)
+"abc" : Str
