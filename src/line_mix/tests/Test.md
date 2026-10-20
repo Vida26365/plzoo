@@ -16,4 +16,14 @@
 
 
 
-### Integration tests
+# Vprašanja
+
+- `LBRACKET es = separated_list(COMMA, expr) RBRACKET { Array es }`  -- Ali je verižni seznam vredu
+- Ali moram dodati $i<n$ pri set in lookup
+- Ali je vredu, da var ne potrebuje vsega konteksta
+- program napisan v zvezku
+- Kako naj bo strukturirana moja diplomska?
+    - opis naravne dedukcije in curry howard
+    - kaj je linearna logika
+    - opis programa
+    - implementacija

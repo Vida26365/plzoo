@@ -126,13 +126,21 @@ snd (3 & 4);
 
 [1, 2, 3];
 make 3 0;
+set [10, 20, 30] 1 99;
+
+# An array is linear, so length and lookup give the array back together with the result.
+#   length : Arr t -o Int * Arr t
+#   lookup : Arr t -o Int -o t * Arr t
 length [1, 2, 3];
 lookup [10, 20, 30] 1;
-set [10, 20, 30] 1 99;
 
 # The array type: Arr t is an array of elements of type t.
 let arr : Arr Int = [1, 2, 3];
-length arr;
+match length arr with (n, arr) -> set arr 0 n;
+
+# The returned array is used for the next operation.
+let arr = [10, 20, 30];
+match lookup arr 2 with (x, arr) -> set arr 0 x;
 
 
 # ---------- Strings  Str ----------
