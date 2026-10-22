@@ -23,15 +23,7 @@ true;
 if 1 < 2 then 10 else 20;
 
 
-# ---------- Definitions: unrestricted and linear ----------
 
-# Without an annotation, a number is unrestricted (!Int) and can be used many times.
-let a = 6;
-a + a * a;
-
-# A !Int variable can also be redefined.
-let a  = 7;
-a;
 
 # With an annotation, the variable has exactly that type. Int is linear, so it must be used exactly once.
 let b : Int = 5;
@@ -88,7 +80,7 @@ match !7 with !x -> x + x;
 # ---------- Recursive functions  !(s -o t) ----------
 # Needs complete type annotation
 
-let rec count :!(!Int -o !Int) = !(fun x : !Int -> if x < 10 then count (x + 1) else 10);
+let rec count = (fun x : !Int -> if x < 10 then count (x + 1) else 10);
 count 11;
 
 

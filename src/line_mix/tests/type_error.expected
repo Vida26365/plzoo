@@ -1,2 +1,0 @@
-Type error: this expression has type !Bool but is used as if it has type !Int or Int
-[exit 1]

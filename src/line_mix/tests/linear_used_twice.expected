@@ -1,3 +1,0 @@
-b : Int
-Type error: unbound variable b.
-[exit 1]

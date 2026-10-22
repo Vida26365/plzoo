@@ -47,13 +47,6 @@ module Line = Zoo.Main(struct
       let _, ctx' = Type_checker.check_rec ctx x ty e in
       let v = Interpret.make_rec x (Interpret.interp env e) in
       (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
-(* 
-    | Syntax.DefHold (x, ty, e) ->
-      check_redefinition ctx x ;
-      let ty, ctx' = Type_checker.infer ctx e in
-      let ty' = Linear Type_checker.unwrap ty in
-      let v = Interpret.interp env e in
-      (Type_checker.define ctx' x ty', Interpret.Environment.add x v env) *)
 
     | Syntax.Quit -> exit 0
     

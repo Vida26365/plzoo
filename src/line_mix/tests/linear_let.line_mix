@@ -1,3 +1,0 @@
-# an annotated Int is linear: using it once is fine
-let b : Int = 7;
-b + 1;

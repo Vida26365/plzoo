@@ -1,6 +1,0 @@
-f : File
-f : File
-() : !Unit
-f : File
-p : (Str * File)
-"old -> new" : Str

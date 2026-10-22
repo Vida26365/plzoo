@@ -1,3 +1,0 @@
-b : Int
-Linear error: !e cannot use the linear variable b
-[exit 1]
