@@ -21,7 +21,7 @@ module Line = Zoo.Main(struct
 
   let check_redefinition ctx x =
     match Type_checker.Context.find_opt x ctx with
-    | Some (Type_checker.Linear _) ->
+    | Some ty -> if Type_checker.is_linear ty then
       Type_checker.linear_error "linear variable %s is redefined before it is used" x
     | _ -> ()
 
@@ -33,7 +33,7 @@ module Line = Zoo.Main(struct
     | Syntax.Expr e ->
         let ty, ctx' = Type_checker.infer ctx e in 
         let value = Interpret.interp env e in
-        Zoo.print_info "%s : %s@." (Interpret.str_of_value value) (Type_checker.string_of_variable ty) ;
+        Zoo.print_info "%s : %s@." (Interpret.str_of_value value) (Type_checker.string_of_ltype ty) ;
       (ctx', env)
 
     | Syntax.Def (x, e) -> 
@@ -44,9 +44,9 @@ module Line = Zoo.Main(struct
 
     | Syntax.DefRec (x, ty, e) -> 
       check_redefinition ctx x ;
-      let ctx' = Type_checker.check_rec ctx x (Linear ty) e in
+      let _, ctx' = Type_checker.check_rec ctx x ty e in
       let v = Interpret.make_rec x (Interpret.interp env e) in
-      (Type_checker.define ctx' x (Linear ty), Interpret.Environment.add x v env)
+      (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
 (* 
     | Syntax.DefHold (x, ty, e) ->
       check_redefinition ctx x ;

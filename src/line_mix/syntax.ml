@@ -24,6 +24,7 @@ type expr =
   | Bool of bool          (** boolean constant *)
   | String of string      (** string constant *)
   | Unit                  (** unit constant [()] *)
+  (* | File of string        * file constant [f] *)
 
   | Times of expr * expr  (** product [e1 * e2] *)
   | Divide of expr * expr (** quotient [e1 / e2] *)
