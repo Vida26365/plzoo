@@ -1,0 +1,11 @@
+# BUG: the second half of e1 & e2 is checked in the context left over by e1.
+# Only one half is ever used (fst or snd), so both halves should use the same resources.
+#
+# Expected:  < & > : (Int & Int)
+# Actual:    Type error: unbound variable p
+#
+# Where: type_checker.ml, `infer`, case `Bundle`.
+#        `infer ctx1 e2` should be `infer ctx e2` (both halves start from ctx).
+
+let p = (1, 2);
+(match p with (a, b) -> a) & (match p with (a, b) -> b);

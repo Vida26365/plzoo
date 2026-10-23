@@ -1,0 +1,11 @@
+# BUG: a type annotation cannot be used to build a sum value.
+#
+# Expected:  inl 1 : (Int + Bool)
+# Actual:    Type error: cannot infer the type of inl e: add a type annotation, e.g. (inl e : Int + Bool)
+#
+# Where: type_checker.ml, `infer`, case `Annot (t, lty)`.
+#        It calls `infer ctx t`, so the annotation `lty` is ignored while checking `t`.
+#        `check ctx t lty` would use it (check already knows how to handle Inl/Inr/Array).
+# Same problem: `let s : Int + Bool = inr true;` (the parser turns it into an Annot).
+
+(inl 1 : Int + Bool);

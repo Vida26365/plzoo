@@ -1,0 +1,15 @@
+# BUG: when an array literal is checked against a type, its elements do not use up
+# linear variables, so p can still be used afterwards.
+#
+# Expected:  Type error: unbound variable p  (on the last line)
+# Actual:    [(1, 2)] : ((Int * Int) Array)
+#            (1, 2) : (Int * Int)
+#
+# Where: type_checker.ml, `check`, case `Array lst, LArr ty`.
+#        `List.iter (fun e -> ignore (check ctx e ty))` throws away the new context and
+#        returns the original ctx. It should pass the context from one element to the next
+#        (like `check_all` in the `Array` case of `infer`).
+
+let p = (1, 2);
+(fun a : Arr (Int * Int) -> a) [p];
+p;

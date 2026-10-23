@@ -1,0 +1,12 @@
+# BUG: the else branch is checked in the context left over by the then branch.
+# Only one branch runs, so both should be allowed to use the same linear variable.
+#
+# Expected:  3 : Int
+# Actual:    Type error: unbound variable p
+#
+# Where: type_checker.ml, `infer`, case `If`.
+#        `infer ctx2 e2` should be `infer ctx1 e2` (both branches start from ctx1).
+# Same problem: `Match` on sums (right branch starts from ctx_left instead of ctx1).
+
+let p = (1, 2);
+if true then (match p with (a, b) -> a + b) else (match p with (a, b) -> a * b);

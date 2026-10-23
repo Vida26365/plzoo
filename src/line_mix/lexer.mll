@@ -6,7 +6,7 @@
 let var = ['_' 'a'-'z' 'A'-'Z'] ['_' 'a'-'z' 'A'-'Z' '0'-'9']*
 
 rule token = parse
-    '#' [^'\n']* '\n' { Lexing.new_line lexbuf; token lexbuf }
+    '#' [^'\n']*    { token lexbuf }
   | '\n'            { Lexing.new_line lexbuf; token lexbuf }
   | [' ' '\t']      { token lexbuf }
   | '-'? ['0'-'9']+ { INT (int_of_string(lexeme lexbuf)) }

@@ -1,0 +1,2 @@
+# expect: Type error
+1 = true;

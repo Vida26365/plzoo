@@ -1,0 +1,10 @@
+# BUG: runtime errors crash the program instead of printing a normal error.
+#
+# Expected:  Runtime error: Division by 0      (exit code 1, like other errors)
+# Actual:    Fatal error: exception Dune__exe__Interpret.Runtime_error("Division by 0")   (exit code 2)
+#
+# Where: interpret.ml, `runtime_error` raises its own exception `Runtime_error`,
+#        which Zoo does not catch. Use Zoo.error instead, like type_checker.ml does:
+#        let runtime_error fmt = Zoo.error ~kind:"Runtime error" fmt
+
+1 / 0;

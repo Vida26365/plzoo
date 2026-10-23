@@ -6,5 +6,10 @@ if x < 10 then 2 else 10;
 fun x : Int -> x + 1;
 
 let inc = fun x : Int -> x + 1;
+inc 5;
+inc 10;
 
-let rec count = fun x : Int -> if x < 10 then count (x + 1) else 10;
+
+let rec count : Int -o Int = fun x : Int -> if x < 10 then count (x + 1) else 10;
+
+count 0;

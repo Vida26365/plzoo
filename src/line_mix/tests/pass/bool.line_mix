@@ -1,0 +1,34 @@
+# Booleans, comparisons and conditionals
+
+true;
+false;
+
+# = and < on integers
+3 = 3;
+3 = 4;
+1 < 2;
+2 < 1;
+
+# if
+if 1 < 2 then 10 else 20;
+if false then 10 else 20;
+if 3 = 3 then true else false;
+
+# = on types that are not Int
+true = true;
+true = false;
+() = ();
+"ab" = "ab";
+"ab" = "ba";
+(1, true) = (1, true);
+(1, true) = (1, false);
+[1, 2, 3] = [1, 2, 3];
+[1, 2, 3] = [2, 3, 4];
+[1, 2] = [1, 2, 3];
+[(1, 2), (3, 4)] = [(1, 2), (3, 4)];
+[(1, 2), (3, 4)] = [(1, 2), (3, 5)];
+
+# Comparing linear variables uses them up
+let a = [1, 2];
+let b = [1, 2];
+a = b;

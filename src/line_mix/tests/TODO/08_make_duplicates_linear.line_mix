@@ -1,0 +1,11 @@
+# BUG: `make n e` copies e n times, even when e is linear.
+# Here one file handle becomes two, so the same file could be closed twice.
+#
+# Expected:  Linear error (a linear value cannot be copied)
+# Actual:    [<file make_bug.txt>, <file make_bug.txt>] : (File Array)
+#
+# Where: type_checker.ml, `infer`, case `Make`.
+#        It should reject `e` when its type is linear (`is_linear ety`).
+
+let f = open "make_bug.txt";
+make 2 f;

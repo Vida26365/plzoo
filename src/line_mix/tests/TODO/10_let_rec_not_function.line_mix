@@ -1,0 +1,10 @@
+# BUG: unclear error message for `let rec` with a type that is not a function.
+#
+# Expected:  Type error: let rec needs a function type, but got Int
+# Actual:    Type error: TODO
+#
+# Where: type_checker.ml, `check_rec`, last case:
+#        `typing_error "TODO" (string_of_ltype ty)` -- the message has no %s,
+#        so the type is never printed.
+
+let rec f : Int = 5;

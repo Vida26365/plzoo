@@ -1,0 +1,16 @@
+# BUG: a function that uses a linear variable from outside can be called many times,
+# so the linear pair p is used twice.
+#
+# Expected:  Linear error (p is used more than once)
+# Actual:    4 : Int
+#            5 : Int
+#
+# Where: type_checker.ml, `is_linear` says functions (LLolli) are not linear.
+#        That is only safe if the function body does not use any linear variable from outside.
+# Options: check in `Fun` that the body consumed nothing from ctx (ctx1 has the same
+#          linear variables as ctx), or make such functions linear.
+
+let p = (1, 2);
+let f = fun x : Int -> match p with (a, b) -> a + b + x;
+f 1;
+f 2;

@@ -1,0 +1,9 @@
+# BUG: comparing inl with inr crashes (needs 01 fixed first to be reachable).
+#
+# Expected:  false : Bool
+# Actual:    (after fixing 01) Fatal error: ... Assertion failed
+#
+# Where: interpret.ml, `equal_value` has cases for (VInl, VInl) and (VInr, VInr),
+#        but not for (VInl, VInr) or (VInr, VInl), so it reaches `assert false`.
+
+(inl 1 : Int + Int) = (inr 1 : Int + Int);

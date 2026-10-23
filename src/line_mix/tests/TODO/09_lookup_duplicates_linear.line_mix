@@ -1,0 +1,10 @@
+# BUG: `lookup` returns the element AND the array that still contains it.
+# If the element is linear, it now exists twice.
+#
+# Expected:  Linear error, or lookup only allowed on arrays of non-linear elements
+# Actual:    ((1, 2), [(1, 2)]) : ((Int * Int) * ((Int * Int) Array))
+#
+# Where: type_checker.ml, `infer`, case `Lookup`.
+#        It should reject arrays whose element type is linear (`is_linear t`).
+
+lookup [(1, 2)] 0;

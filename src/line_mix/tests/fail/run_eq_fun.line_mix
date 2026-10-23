@@ -1,0 +1,2 @@
+# expect: Runtime_error
+(fun x : Int -> x) = (fun x : Int -> x);

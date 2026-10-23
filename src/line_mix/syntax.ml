@@ -72,7 +72,7 @@ type expr =
 type toplevel_cmd =
   | Expr of expr       (** an expression to be evaluated *)
   | Def of name * expr (** toplevel definition [let x = e] *)
-  | DefRec of name * ltype * expr (** recursive toplevel definition [let rec f : t = e] *)
+  | DefRec of name * ltype * expr (** recursive toplevel definition [let rec f = e] *)
   (* | DefHold of name * ltype * expr * toplevel definition marked as restricted [let hold f : t = e] *)
   | Quit               (* exit toplevel [$quit] *)
 

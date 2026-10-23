@@ -1,0 +1,4 @@
+# expect: Type error
+# a is linear, so after the first use it is no longer in the context
+let a = [1, 2];
+a = a;

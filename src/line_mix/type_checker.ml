@@ -47,7 +47,7 @@ let is_linear = function
 let f_with_added_var (ctx : context) x (ty : ltype) f =
   let org_ty = Context.find_opt x ctx in
   let result, ctx' = f (Context.add x ty ctx) in
-  if not (is_linear ty) && (Context.mem x ctx') then 
+  if is_linear ty && (Context.mem x ctx') then 
     linear_error "linear variable %s is never used" x ;
        
   let ctx' =

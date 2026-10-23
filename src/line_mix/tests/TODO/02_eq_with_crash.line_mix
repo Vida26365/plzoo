@@ -1,0 +1,10 @@
+# BUG: comparing two & values crashes the interpreter.
+#
+# Expected:  either a Type error (if & values cannot be compared) or a Bool
+# Actual:    Fatal error: exception File "src/line_mix/interpret.ml", line 81, characters 9-15: Assertion failed
+#
+# Where: interpret.ml, `equal_value` has no case for VWith, so it reaches `| _ -> assert false`.
+# Decide: should & be comparable? A VWith holds unevaluated expressions, so probably not.
+#         Then the type checker (`Equal` in infer) should reject it.
+
+(1 & 2) = (1 & 2);
