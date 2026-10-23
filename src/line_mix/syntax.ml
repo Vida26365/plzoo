@@ -3,7 +3,6 @@
 (** The type of variable names. *)
 type name = string
 
-
 (** Linear types *)
 type ltype =
   | LInt (** integer *)
@@ -16,15 +15,15 @@ type ltype =
   | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
   | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
   | LArr of ltype (** Array type [arr t] *)
-  (* | LBang of ltype * bang type [!t] *)
+  | LBang of ltype (** bang type [!t] *)
 
-type expr =
+
+and expr =
   | Var of name           (** variable *)
   | Int of int            (** integer constant *)
   | Bool of bool          (** boolean constant *)
   | String of string      (** string constant *)
   | Unit                  (** unit constant [()] *)
-  (* | File of string        * file constant [f] *)
 
   | Times of expr * expr  (** product [e1 * e2] *)
   | Divide of expr * expr (** quotient [e1 / e2] *)
@@ -38,8 +37,8 @@ type expr =
   | If of expr * expr * expr (** conditional [if e1 then e2 else e3] *)
   | Let of name * expr * expr (** local definition [let x = e1 in e2] *)
   
-  (* | Bang of (expr * name * expr)          (** bang [!e]*)
-  | Promote of expr   * promotion [!e] *)
+  | Bang of (expr * name * expr)          (** bang [!e]*)
+  | Promote of expr   (** promotion [!e] *)
 
   | Pair of expr * expr   (** pair e1⊗e2  [(e1, e2)]*)
   | Split of expr * name * name * expr  (** Applies e1 and e2 to f, where e = (e_1, e2). [split e to e1 e2 in f(e1, e2)]*)
@@ -74,6 +73,5 @@ type toplevel_cmd =
   | Expr of expr       (** an expression to be evaluated *)
   | Def of name * expr (** toplevel definition [let x = e] *)
   | DefRec of name * ltype * expr (** recursive toplevel definition [let rec f : t = e] *)
-  (* | DefHold of name * ltype * expr * toplevel definition marked as restricted [let hold f : t = e] *)
   | Quit               (* exit toplevel [$quit] *)
 

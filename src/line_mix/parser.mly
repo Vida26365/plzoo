@@ -12,7 +12,7 @@
 %token COMMA COLON SEMICOLON
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG
-%token LET REC IN HOLD
+%token LET REC IN
 %token MATCH WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
@@ -49,8 +49,6 @@ toplevel:
     { Def (x, Annot (e, t)) }
   | LET REC x = VAR COLON t = ltype EQUAL e = expr SEMICOLON
     { DefRec (x, t, e) }
-  // | LET HOLD x = VAR COLON t = ltype EQUAL e = expr SEMICOLON
-  //   { DefHold (x, t, e) }
   | e = expr SEMICOLON
     { Expr e }
 
@@ -98,8 +96,8 @@ plain_expr:
     { Split (pair, x, y, body) }
   | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
     { Split (pair, x, y, body) }
-  // | MATCH term = expr WITH BANG x = VAR ARROW body = expr
-  //   { Bang (term, x, body) }
+  | MATCH term = expr WITH BANG x = VAR ARROW body = expr
+    { Bang (term, x, body) }
   | INL e = atom_expr
     { Inl e }
   | INR e = atom_expr
@@ -158,8 +156,8 @@ atom_expr:
     { Unit }
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET
     { Array es }
-  // | BANG e = atom_expr
-  //   { Promote e }
+  | BANG e = atom_expr
+    { Promote e }
 
 
 
@@ -199,8 +197,8 @@ atom_type:
     { LUnit }
   | TYPE_FILE
     { LFile }
-  // | BANG t = atom_type
-  //   { LBang t }
+  | BANG t = atom_type
+    { LBang t }
   | TYPE_ARR t = atom_type
     { LArr t }
   | LPAREN t = ltype RPAREN
