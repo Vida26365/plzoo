@@ -43,7 +43,7 @@ let rec subtype a b =
   | LAnd (a1, a2), LAnd (b1, b2)
   | LWith (a1, a2), LWith (b1, b2)
   | LPlus (a1, a2), LPlus (b1, b2) -> subtype a1 b1 && subtype a2 b2
-| LArr a', LArr b' -> subtype a' b'
+  | LArr a', LArr b' -> subtype a' b'
   | LLolli (a1, a2), LLolli (b1, b2) -> subtype b1 a1 && subtype a2 b2
   | _ -> false
 

@@ -27,26 +27,47 @@ module Line = Zoo.Main(struct
       Type_checker.linear_error "linear variable %s is redefined before it is used" x
     | _ -> ()
 
+
+  (** 
+  What doe exec do :
+  - typecheck
+      - if only linear context used, then is linear 
+  - interpret
+  - return context and environment
+    *)
   let exec (ctx, env) = function
     | Syntax.Expr e ->
       let ty, ctx' = Type_checker.infer ctx e in
       let value = Interpret.interp env e in
       Zoo.print_info "%s : %s@." (Interpret.str_of_value value) (Type_checker.string_of_ltype ty) ;
       (ctx', env)
+
     | Syntax.DefRec (x, ty, e) ->
       check_redefinition ctx x ;
       let ctx' = Type_checker.check_rec ctx x ty e in
       let v = Interpret.make_rec x (Interpret.interp env e) in
       (* Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ; *)
       (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
+
     | Syntax.Def (x, e) ->
       let ty, ctx' = Type_checker.infer ctx e in
-      (* Checked after [e], so that [let f = write f "x";] may consume the old [f]. *)
       check_redefinition ctx' x ;
       let ty = Type_checker.default_bang e ty in
       let v = Interpret.interp env e in
       (* Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ; *)
       (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
+    
+    | Syntax.DefHold (x, e) ->  (* TODO *)
+      let ty, ctx' = Type_checker.infer ctx e in
+      check_redefinition ctx' x ;
+      let ty = match ty with
+      | Type_checker.LBang ty' -> ty'
+      | ty' -> ty' 
+      in
+      let v = Interpret.interp env e in
+      (* Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ; *)
+      (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
+
     | Syntax.Quit -> exit 0
 
 end) ;;

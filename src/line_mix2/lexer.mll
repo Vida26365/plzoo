@@ -26,6 +26,8 @@ rule token = parse
 
   | "let"           { LET }
   | "rec"           { REC }
+  | "to"            { TO }
+  | "hold"          { HOLD }
   | "in"            { IN }
 
   | "match"         { MATCH }
@@ -54,6 +56,7 @@ rule token = parse
 
 
   | "!"             { BANG }
+  | "*"             { STAR }
   | '%'             { MOD }
   | '&'             { AMP }
   | '('             { LPAREN }

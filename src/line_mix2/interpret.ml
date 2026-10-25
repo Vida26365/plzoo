@@ -19,7 +19,7 @@ type value =
   | VInr of value
   | VWith of environment * expr * expr 
   | VFun of environment * name * expr (* This form is needed for application. Name serves for a name of a variable that will get substituted on apply. It can be done with VClosure, but it is easier with VFun*)
-  | VArr of value * value array
+  | VArr of value array
   | VRecFun of environment * name * name * expr (* recursive function: environment, function name, argument name, body *)
   | VStr of string
   | VUnit
@@ -52,13 +52,29 @@ let rec str_of_value = function
   | VInr x -> "inr " ^ str_of_value x
   | VWith _ -> "< & >"
   | VFun _ | VRecFun _ -> "<fun>"
-  | VArr (_, arr) -> (
+  | VArr arr -> (
     let string_of_value_array arr =
     let elements = Array.to_list arr |> List.map str_of_value in
     "[" ^ String.concat ", " elements ^ "]"
     in
     string_of_value_array arr
   )
+
+
+let rec equal_value v1 v2 =
+  match v1, v2 with
+  | VInt x, VInt y -> x = y
+  | VBool x, VBool y -> x = y
+  | VStr x, VStr y -> x = y
+  | VUnit, VUnit -> true
+  | VPair (a1, b1), VPair (a2, b2) -> equal_value a1 a2 && equal_value b1 b2
+  | VInl x, VInl y -> equal_value x y
+  | VInr x, VInr y -> equal_value x y
+  | VArr arr1, VArr arr2 -> Array.length arr1 = Array.length arr2 && Array.for_all2 equal_value arr1 arr2
+  | (VFun _ | VRecFun _ ), _ -> runtime_error "Cannot compare functions"
+  | VFile _, _ -> runtime_error "Cannot compare files"
+  | _ -> assert false  
+
 
 
 
@@ -88,9 +104,7 @@ let rec str_of_value = function
   | Minus (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VInt (a - b)
     | _ -> assert false)
-  | Equal (e1, e2) -> (match interp env e1, interp env e2 with 
-    | VInt a, VInt b -> VBool (a = b)
-    | _ -> assert false)
+  | Equal (e1, e2) -> VBool (equal_value (interp env e1) (interp env e2))
   | Less (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VBool (a < b)
     | _ -> assert false)
@@ -161,23 +175,23 @@ let rec str_of_value = function
 
   | Array lst -> (
     let arr = Array.of_list lst in
-    VArr (VInt (Array.length arr), (Array.map (interp env) arr))
+    VArr (Array.map (interp env) arr)
   ) 
   | Make (n, expr) -> (
     let k = match interp env n with
     | VInt k -> k
     | _ -> assert false
     in
-    VArr (VInt k, (Array.make k (interp env expr)))
+    VArr (Array.make k (interp env expr))
   )
     
   | Length (arr) -> (match interp env arr with
-    | VArr (n, _) -> n
+    | VArr arr -> VInt (Array.length arr)
     | _ -> assert false
     )
   | Lookup (earr, i) -> (
     let varr = match interp env earr with
-    | VArr (_, varr) -> varr
+    | VArr varr -> varr
     | _ -> assert false
     in
     let k = match interp env i with
@@ -192,7 +206,7 @@ let rec str_of_value = function
     )
     | Set (earr, i, expr) -> (
       let varr = match interp env earr with
-        | VArr (_, varr) -> varr
+        | VArr varr -> varr
         | _ -> assert false
       in
       let k = match interp env i with
@@ -204,15 +218,16 @@ let rec str_of_value = function
           index_error "Array index out of range"
         else 
           Array.set varr k (interp env expr);
-          VArr (VInt (Array.length varr), varr)
+          VArr varr
         
     )
-    | Bang (expr, name, body) -> (
+    | Demote e -> interp env e
+    (* | Bang (expr, name, body) -> (
       let value = interp env expr in
       let env' = Environment.add name value env in
       interp env' body
     )
-    | Promote e -> interp env e
+    | Promote e -> interp env e *)
 
     | Open e -> (
       match interp env e with
