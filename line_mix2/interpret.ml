@@ -281,6 +281,6 @@ let rec equal_value v1 v2 =
 
 
 (** Turns the value of [e] in [let rec f : t = e] into a function that can call itself as [f]. *)
-let make_rec f = function
+let make_rec f env = function
   | VFun (env, x, body) -> VRecFun (env, f, x, body)
   | _ -> runtime_error "let rec expects a function"

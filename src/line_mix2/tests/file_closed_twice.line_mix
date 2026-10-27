@@ -1,1 +1,0 @@
-fun f : File -> let a = close f in close f;

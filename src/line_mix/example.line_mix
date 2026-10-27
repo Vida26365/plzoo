@@ -1,0 +1,15 @@
+# Mixed linear types
+
+# for commenting use #
+
+# for braking up lines use \
+
+# When using Sum type (A + B) you must define what each side should be
+
+let option_find = fun a : Array !Int -> fun i : !Int -> \
+        match (length a) with (l, a) -> \
+            if i < l \
+            then (inl (lookup a i) : (!Int * Array !Int) +  Array !Int) \
+            else (inr a : (!Int * Array !Int) +  Array !Int)
+
+

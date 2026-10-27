@@ -1,2 +1,0 @@
-Linear error: a value of type File contains a file, so it cannot be made unrestricted with !
-[exit 1]

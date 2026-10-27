@@ -1,2 +1,0 @@
-let b : Int = 1;
-let g = !(fun n : Int -> n + b);

@@ -53,3 +53,12 @@ and expr =
   | Length of expr (** length of array [length e]*)
   | Lookup of expr * expr (** lookup in array [e1[e2]]*)
   | Set of expr * expr * expr (** set in array [e1[e2] = e3]*)
+
+
+type toplevel_cmd = 
+  | Expr of expr
+  | Def of name * expr
+  | DefRec of name * ltype * ltype * expr
+  | DefHold of name * expr 
+  | Skip
+  | Quit
