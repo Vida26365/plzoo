@@ -18,6 +18,10 @@ let remove ctx x = Context.remove x ctx
 
 
 
+
+
+
+
 let rec string_of_ltype = function
   | LInt -> "Int"
   | LBool -> "Bool"
@@ -35,13 +39,24 @@ let is_linear = function
   | LBang _ -> false
   | _ -> true
 
+
+let remove_bound before after x = (
+  (match Context.find_opt x after with
+   | Some ty when is_linear ty -> linear_error "linear variable %s is never used" x
+   | _ -> ());
+  match Context.find_opt x before with
+  | Some ty -> define after x ty
+  | None -> remove after x
+)
+
+
 let consumes_linear before after =
   Context.exists (fun x ty -> is_linear ty && not (Context.mem x after)) before
 
 let require_same_context ctx1 ctx2 =
   if not (Context.equal (=) ctx1 ctx2) then
     linear_error
-      "the two branches must use exactly the same resources from the surrounding context"
+      "the two branches must use at the end have the same context"
 
 let require_sameish_type ty1 ty2 =
   match ty1, ty2 with
@@ -58,8 +73,6 @@ let rec merge_types ty1 ty2 =
   match ty1, ty2 with
   | _, LBang _  -> ty1
   | _, _ -> ty2
-
-
 
 and check ctx e ty : context =
   (match e, ty with
@@ -135,17 +148,20 @@ and infer ctx e : ltype * context =
       let ty2, ctx2 = infer ctx1 e2 in
       LAnd (ty1, ty2), ctx2
   | Split (pair, x, y, body) -> 
-      let pair_ty, _ = infer ctx pair in
+      let pair_ty, ctx1 = infer ctx pair in
       (match pair_ty with
       | LAnd (ty1, ty2) -> 
-          let ctx' = define (define ctx x ty1) y ty2 in
-          infer ctx' body
+          let ctx' = define (define ctx1 x ty1) y ty2 in
+          let ty, ctx2 = infer ctx' body in
+          let ctx3 = remove_bound ctx1 (remove_bound ctx1 ctx2 x ) y in 
+          ty, ctx3
         | ty -> typing_error "expected pair type but got %s" (string_of_ltype ty)
       )
   
   | Fun (x, ty, body) -> 
       let ctx1 = define ctx x ty in
       let bty, ctx2 = infer ctx1 body in
+      let ctx2 = remove_bound ctx ctx2 x in
       if consumes_linear ctx ctx2 
         then 
           LLolli (ty, bty), ctx2
@@ -171,8 +187,12 @@ and infer ctx e : ltype * context =
            let ctx_right1 = define ctx1 y ty2 in
            let ty_left, ctx_left2 = infer ctx_left1 e1 in
            let ty_right, ctx_right2 = checkish ctx_right1 e2 ty_left in
-           require_same_context ctx_left2 ctx_right2;
-           merge_types ty_left ty_right, ctx_left2
+           let ctx_left3 = remove_bound ctx1 ctx_left2 x in 
+           let ctx_right3 = remove_bound ctx1 ctx_right2 y in 
+
+
+           require_same_context ctx_left3 ctx_right3;
+           merge_types ty_left ty_right, ctx_left3
         | ty -> typing_error "this expression has type %s but match expects a Sum type" (string_of_ltype ty)
       )
 
@@ -202,7 +222,7 @@ and infer ctx e : ltype * context =
           let rec aux ctx = function
             | [] -> LArr ty, ctx
             | e::es ->
-                let ctx2 = check ctx1 e ty in
+                let ctx2 = check ctx e ty in
                 aux ctx2 es
           in
           aux ctx1 es

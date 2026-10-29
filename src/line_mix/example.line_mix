@@ -1,15 +1,41 @@
 # Mixed linear types
 
-# for commenting use #
+# For commenting use #.
 
-# for braking up lines use \
+# For removing ! use ^. This makes unrestricted variable of type !A into linear variable of type A.
+# When it is possible, variable will have a type !A. 
+# For example f uses no linear resources from souranding context, so it has a type !(Int -o Int)
+
+let f = fun y : Int -> y + 1
+
+let x  = 5
+let z = ^x
+
+f
+f z
+f ^x
+x
 
 # When using Sum type (A + B) you must define what each side should be
+
+
+let s = (inl 3 : !Int + !Int)
+match s with inl x -> 1 | inr y -> 2
+
+# for braking up lines use \
+# Each branch of if-then-else statment should use exactly the same linear resources.
 
 let option_find = fun a : Array !Int -> fun i : !Int -> \
         match (length a) with (l, a) -> \
             if i < l \
             then (inl (lookup a i) : (!Int * Array !Int) +  Array !Int) \
             else (inr a : (!Int * Array !Int) +  Array !Int)
+
+
+let a = [1, 2, 3, 4]
+let option = option_find a 100
+
+match option with \
+    inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
 
 
