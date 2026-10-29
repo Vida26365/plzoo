@@ -119,7 +119,7 @@ let rec interp env =
       let env2 = define x (interp env a) env1 in
       interp env2 expr
     | VRecFun (env1, f, x, expr) as v -> 
-        let env2 = define x (interp env1 a) (define f v env1)in
+        let env2 = define x (interp env a) (define f v env1)in
         interp env2 expr
     | _ -> assert false
   )

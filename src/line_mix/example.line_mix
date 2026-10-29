@@ -39,3 +39,14 @@ match option with \
     inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
 
 
+# Function of type !(A -o B) can be a recursive function
+
+let rec f from !Int to Int = \
+    fun x : !Int -> \
+        if x = 10 then ^x \
+        else f (x + 1)
+
+f 1
+
+
+

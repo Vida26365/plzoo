@@ -26,7 +26,7 @@ rule token = parse
   | "rec"           { REC }
   | "to"            { TO }
   | "from"          { FROM }
-  | "hold"          { HOLD }
+  (* | "hold"          { HOLD } *)
 
   | "match"         { MATCH }
   | "with"          { WITH }

@@ -13,7 +13,7 @@
 %token COLON COMMA
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG CARET
-%token LET REC TO FROM HOLD
+%token LET REC TO FROM
 %token MATCH WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
@@ -55,10 +55,10 @@ command:
     { Def (x, Annot (e, t)) }
   | LET REC x = VAR FROM t1 = ltype TO t2 = ltype EQUAL e = expr 
     { DefRec (x, t1, t2, e) }
-  | LET HOLD x = VAR EQUAL e = expr 
-    { DefHold (x, e) }
-  | LET HOLD x = VAR COLON t = ltype EQUAL e = expr 
-    { DefHold (x, Annot (e, t)) }
+  // | LET HOLD x = VAR EQUAL e = expr 
+  //   { DefHold (x, e) }
+  // | LET HOLD x = VAR COLON t = ltype EQUAL e = expr 
+  //   { DefHold (x, Annot (e, t)) }
   | e = expr 
     { Expr e }
 
@@ -76,22 +76,22 @@ expr:
     { e }
 
 infix_expr:
-  | e1 = infix_expr AMP e2 = infix_expr { Bundle (e1, e2) }
-  | e1 = infix_expr EQUAL e2 = infix_expr { Equal (e1, e2) }
-  | e1 = infix_expr LESS e2 = infix_expr { Less (e1, e2) }
-  | e1 = infix_expr PLUS e2 = infix_expr { Plus (e1, e2) }
-  | e1 = infix_expr MINUS e2 = infix_expr { Minus (e1, e2) }
-  | e1 = infix_expr TIMES e2 = infix_expr { Times (e1, e2) }
-  | e1 = infix_expr DIVIDE e2 = infix_expr { Divide (e1, e2) }
-  | e1 = infix_expr MOD e2 = infix_expr { Mod (e1, e2) }
+  | e1 = infix_expr AMP e2 = infix_expr     { Bundle (e1, e2) }
+  | e1 = infix_expr EQUAL e2 = infix_expr   { Equal (e1, e2) }
+  | e1 = infix_expr LESS e2 = infix_expr    { Less (e1, e2) }
+  | e1 = infix_expr PLUS e2 = infix_expr    { Plus (e1, e2) }
+  | e1 = infix_expr MINUS e2 = infix_expr   { Minus (e1, e2) }
+  | e1 = infix_expr TIMES e2 = infix_expr   { Times (e1, e2) }
+  | e1 = infix_expr DIVIDE e2 = infix_expr  { Divide (e1, e2) }
+  | e1 = infix_expr MOD e2 = infix_expr     { Mod (e1, e2) }
   | e = app_expr { e }
 
 app_expr:
   | e = atom_expr { e }
-  | f = app_expr a = atom_expr { Apply (f, a) }
-  | MAKE n = atom_expr e = atom_expr { Make (n, e) }
-  | LENGTH a = atom_expr { Length a }
-  | LOOKUP a = atom_expr i = atom_expr { Lookup (a, i) }
+  | f = app_expr a = atom_expr                    { Apply (f, a) }
+  | MAKE n = atom_expr e = atom_expr              { Make (n, e) }
+  | LENGTH a = atom_expr                          { Length a }
+  | LOOKUP a = atom_expr i = atom_expr            { Lookup (a, i) }
   | SET a = atom_expr i = atom_expr v = atom_expr { Set (a, i, v) }
   | INL e = atom_expr { Inl e }
   | INR e = atom_expr { Inr e }
@@ -101,11 +101,11 @@ app_expr:
 atom_expr:
   | LPAREN e = expr RPAREN { e }
   | LPAREN e1 = expr COMMA e2 = expr RPAREN { Pair (e1, e2) }
-  | LPAREN e = expr COLON t = ltype RPAREN { Annot (e, t) }
-  | x = VAR { Var x }
-  | n = INT { Int n }
-  | TRUE { Bool true }
-  | FALSE { Bool false }
+  | LPAREN e = expr COLON t = ltype RPAREN  { Annot (e, t) }
+  | x = VAR     { Var x }
+  | n = INT     { Int n }
+  | TRUE        { Bool true }
+  | FALSE       { Bool false }
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET { Array es }
   | CARET e = atom_expr { Demote e }
 

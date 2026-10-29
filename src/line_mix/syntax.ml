@@ -59,6 +59,6 @@ type toplevel_cmd =
   | Expr of expr
   | Def of name * expr
   | DefRec of name * ltype * ltype * expr
-  | DefHold of name * expr 
+  (* | DefHold of name * expr  *)
   | Skip
   | Quit
