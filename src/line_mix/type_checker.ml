@@ -167,7 +167,7 @@ and infer ctx e : ltype * context =
           LLolli (ty, bty), ctx2
         else
           LBang (LLolli (ty, bty)), ctx2
-  | Apply (f, a) -> (* TODO: dodaj da se lahko nekaj tipa !A aplaja na  A -o B*)
+  | Apply (f, a) -> 
       let fty, ctx1 = infer ctx f in
       (match fty with
         | LLolli (ty1, ty2) | LBang (LLolli (ty1, ty2)) -> 
@@ -189,7 +189,6 @@ and infer ctx e : ltype * context =
            let ty_right, ctx_right2 = checkish ctx_right1 e2 ty_left in
            let ctx_left3 = remove_bound ctx1 ctx_left2 x in 
            let ctx_right3 = remove_bound ctx1 ctx_right2 y in 
-
 
            require_same_context ctx_left3 ctx_right3;
            merge_types ty_left ty_right, ctx_left3

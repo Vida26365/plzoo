@@ -16,14 +16,72 @@ f z
 f ^x
 x
 
-# When using Sum type (A + B) you must define what each side should be
 
+# for braking up lines use \
+
+# Arrays.
+
+let arr = [1, 2, 3, 4]
+let len_and_arr = length arr
+let arr = match len_and_arr with (l, a) -> \
+    set a (l - 1) 100
+
+
+# Pair type.
+
+let int_and_arr = (100, [1, 2, 3])
+match int_and_arr with (v, a) -> set a 2 v
+
+
+# When using Sum type (A + B) you must define what type each side has
 
 let s = (inl 3 : !Int + !Int)
 match s with inl x -> 1 | inr y -> 2
 
-# for braking up lines use \
+
+# With type.
+
+let a = [1, 2, 3, 4]
+
+let with_structure = a & (set a 0 100)
+
+snd with_structure
+
+# Functions.
+
+let f = fun x : !Int -> x + 1
+f 3
+
+# Recursive functions
+# Function of type !(A -o B) can be a recursive function
+
+let rec f from !Int to Int = \
+    fun x : !Int -> \
+        if x = 10 then ^x \
+        else f (x + 1)
+
+f 1
+
+
+# If-then-else.
 # Each branch of if-then-else statment should use exactly the same linear resources.
+
+let a = [1, 2, 3, 4]
+let c = 1
+
+if c < 10 then a else set a 0 100
+
+# Comparing.
+# You can use < between numbers and = with most types
+
+let a = [1, 2, 3]
+a = [1, 2, 3]
+
+(1, 2) = (3, 2)
+
+(inl ^3 : Int + Int) = (inl ^3 : Int + Int)
+
+# Example programs
 
 let option_find = fun a : Array !Int -> fun i : !Int -> \
         match (length a) with (l, a) -> \
@@ -39,14 +97,8 @@ match option with \
     inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
 
 
-# Function of type !(A -o B) can be a recursive function
 
-let rec f from !Int to Int = \
-    fun x : !Int -> \
-        if x = 10 then ^x \
-        else f (x + 1)
 
-f 1
 
 
 
