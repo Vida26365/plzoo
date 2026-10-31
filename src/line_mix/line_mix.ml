@@ -42,7 +42,7 @@ module Line = Zoo.Main(struct
         let ty, ctx' = Type_checker.infer ctx e in
         let v = Interpret.interp env e in
         check_redefinition ctx' x ;
-        Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ;
+        (* Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ; *)
         (Type_checker.define ctx' x ty, Interpret.define x v env)
     
       
@@ -52,7 +52,7 @@ module Line = Zoo.Main(struct
         let ty, ctx1 = Type_checker.check_rec ctx f a b e in
         let value = Interpret.interp env e in
         let v = Interpret.make_rec f value in
-        Zoo.print_info "%s : %s@." f (Type_checker.string_of_ltype ty) ;
+        (* Zoo.print_info "%s : %s@." f (Type_checker.string_of_ltype ty) ; *)
         (Type_checker.define ctx1 f ty, Interpret.define f v env)
       
     (* | Syntax.DefHold (x, e) ->

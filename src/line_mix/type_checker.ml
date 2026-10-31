@@ -39,6 +39,9 @@ let is_linear = function
   | LBang _ -> false
   | _ -> true
 
+  let unwrap = function
+  | LBang ty -> ty
+  | ty -> ty
 
 let remove_bound before after x = (
   (match Context.find_opt x after with
@@ -126,6 +129,9 @@ and infer ctx e : ltype * context =
       let ty1, ctx1 = infer ctx e1 in
       let ty2, ctx2 = checkish ctx1 e2 ty1 in
       let ty = merge_types ty1 ty2 in
+      (match unwrap ty with
+      | LInt | LBool | LAnd _| LPlus _ | LArr _ -> ()
+      | _ -> typing_error "cannot compare %s" (string_of_ltype ty));
       if is_linear ty 
         then LBool, ctx2
         else LBang LBool, ctx2
