@@ -33,3 +33,4 @@ The language has the following constructs:
     ``` 
     let rec f = fun x : !Int -> if x < 10 then f (x + 1) else x
     ```
+-  A line that is just an expression prints the result of the expression with its type. That way a linear value can be dropped.
