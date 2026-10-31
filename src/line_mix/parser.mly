@@ -18,7 +18,7 @@
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
-%token MAKE LENGTH LOOKUP SET
+%token MAKE LENGTH LOOKUP SWAP
 %token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
 %token EOF
 
@@ -92,7 +92,7 @@ app_expr:
   | MAKE n = atom_expr e = atom_expr              { Make (n, e) }
   | LENGTH a = atom_expr                          { Length a }
   | LOOKUP a = atom_expr i = atom_expr            { Lookup (a, i) }
-  | SET a = atom_expr i = atom_expr v = atom_expr { Set (a, i, v) }
+  | SWAP a = atom_expr i = atom_expr v = atom_expr { Swap (a, i, v) }
   | INL e = atom_expr { Inl e }
   | INR e = atom_expr { Inr e }
   | FST e = atom_expr { Fst e }

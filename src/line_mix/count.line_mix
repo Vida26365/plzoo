@@ -1,0 +1,69 @@
+# function cnt counts how many ones there are in 8 neighboring squares on board of a square (i, j). 
+# Other functions are helper functions.
+
+
+let board = [ \
+    [1, 0, 0, 0, 0, 0, 0],\
+    [0, 1, 0, 0, 0, 0, 0],\
+    [0, 0, 0, 1, 1, 0, 0],\
+    [0, 0, 0, 1, 0, 0, 0],\
+    [0, 0, 0, 0, 1, 0, 0],\
+    [0, 0, 0, 0, 0, 0, 0],\
+    [0, 0, 0, 0, 0, 0, 0]\
+]
+
+let swap_pair = fun pair :  (Array !Int) * (Array (Array !Int)) -> \
+    match pair with (x, y) -> (y, x)
+
+let cnt_3_in_row = fun board : (Array (Array !Int)) -> fun i : !Int -> fun j : !Int -> \
+    match lookup board i with (row, b) -> \
+        if j = 0 then \
+            match lookup row j with (v1, row) ->\
+                match lookup row (j + 1) with (v2, row) -> \
+                        (v1 + v2, (b, row))\
+        else \
+        match length row with (l, row) -> \
+        if j = l-1 then \
+            match lookup row j with (v1, row) ->\
+                    match lookup row (j - 1) with (v0, row) -> \
+                            (v1 + v0, (b, row))\
+        else \
+            match lookup row (j-1) with (v0, row) -> \
+                match lookup row j with (v1, row) ->\
+                    match lookup row (j + 1) with (v2, row) -> \
+                        (v0 + v1 + v2, (b, row))
+
+
+
+let cnt9 = fun board : (Array (Array !Int)) -> fun i : !Int -> fun j : !Int -> \
+    if i = 0 then \
+        match cnt_3_in_row board i j with (v1, bandr1) -> \
+            match bandr1 with (board, row1) -> \
+                match cnt_3_in_row board (i + 1) j with (v2, bandr2) ->\
+                    (v1 + v2, (bandr2, (row1, [0]))) \
+    else \
+    match length board with (l, board) -> \
+    if i = (l -1 ) then \
+        match cnt_3_in_row board i j with (v1, bandr1) -> \
+            match bandr1 with (board, row1) -> \
+                match cnt_3_in_row board (i - 1) j with (v2, bandr2) ->\
+                    (v1 + v2, (bandr2, (row1, [0]))) \
+    else \
+        match cnt_3_in_row board i j with (v1, bandr1) -> \
+            match bandr1 with (board, row1) -> \
+                match cnt_3_in_row board (i + 1) j with (v2, bandr2) -> \
+                    match bandr2 with (board, row2) -> \
+                        match cnt_3_in_row board (i - 1) j with (v0, bandr0) -> \
+                            (v0 + v1 + v2, (bandr0, (row1, row2))) \
+
+
+let cnt = fun board : (Array (Array !Int)) -> fun i : !Int -> fun j : !Int -> \
+    match cnt9 board i j with (v, barrr) ->  \
+        match barrr with (bar, rr) ->  \
+            match bar with (b, r) -> \
+                match lookup b i with (row, b) -> \
+                    match lookup row j with (u, row) -> \
+                        (v - u, (b, (row, (r, rr)))) 
+
+
+cnt board 3 4

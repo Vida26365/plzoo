@@ -176,7 +176,7 @@ let rec interp env =
         else 
       VPair (Array.get varr k, VArr varr)
     )
-  | Set (earr, i, expr) -> (
+  | Swap (earr, i, expr) -> (
       let varr = match interp env earr with
         | VArr varr -> varr
         | _ -> assert false
@@ -189,8 +189,9 @@ let rec interp env =
         then
           index_error "Array index out of range"
         else 
+          let v = Array.get varr k in
           Array.set varr k (interp env expr);
-          VArr varr
+          VPair (v, VArr varr)
     )
 
 

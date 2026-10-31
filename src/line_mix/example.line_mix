@@ -24,13 +24,14 @@ x
 let arr = [1, 2, 3, 4]
 let len_and_arr = length arr
 let arr = match len_and_arr with (l, a) -> \
-    set a (l - 1) 100
+    match swap a (l - 1) 100 with (v, a) -> a
+arr
 
 
 # Pair type.
 
 let int_and_arr = (100, [1, 2, 3])
-match int_and_arr with (v, a) -> set a 2 v
+match int_and_arr with (v, a) -> swap a 2 v
 
 
 # When using a sum type (A + B) you must define what type each side has.
@@ -43,7 +44,7 @@ match s with inl x -> 1 | inr y -> 2
 
 let a = [1, 2, 3, 4]
 
-let with_structure = a & (set a 0 100)
+let with_structure = a & (swap a 0 100)
 
 snd with_structure
 
@@ -69,7 +70,7 @@ f 1
 let a = [1, 2, 3, 4]
 let c = 1
 
-if c < 10 then a else set a 0 100
+if c < 10 then a else match swap a 0 100 with (v, a) -> a
 
 # Comparing.
 # You can use < between numbers and = with most types.

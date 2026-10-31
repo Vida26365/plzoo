@@ -42,7 +42,7 @@ rule token = parse
   | "make"          { MAKE }
   | "length"        { LENGTH }
   | "lookup"        { LOOKUP }
-  | "set"           { SET }
+  | "swap"          { SWAP }
 
 
   | "!"             { BANG }

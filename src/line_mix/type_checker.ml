@@ -246,18 +246,18 @@ and infer ctx e : ltype * context =
   | Lookup (a, i) ->
       let aty, ctx1 = infer ctx a in
       (match aty with
-      | LArr _ -> 
+      | LArr ety -> 
           let _, ctx2 = checkish ctx1 i LInt in
-          LAnd (LBang LInt, aty), ctx2
+          LAnd (ety, aty), ctx2
       | _ -> array_error aty
       )
-  | Set (a, i, v) ->
+  | Swap (a, i, v) ->
       let aty, ctx1 = infer ctx a in
       (match aty with
       | LArr ety -> 
           let _, ctx2 = checkish ctx1 i LInt in
           let _, ctx3 = checkish ctx2 v ety in
-          aty, ctx3
+          LAnd (ety, aty), ctx3
       | _ -> array_error aty;
       )
 
