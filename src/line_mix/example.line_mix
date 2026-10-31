@@ -2,9 +2,9 @@
 
 # For commenting use #.
 
-# For removing ! use ^. This makes unrestricted variable of type !A into linear variable of type A.
-# When it is possible, variable will have a type !A. 
-# For example f uses no linear resources from souranding context, so it has a type !(Int -o Int)
+# For removing ! use ^. It turns an expression of type !A into an expression of type A.
+# When it is possible, an expression will have a type !A. 
+# For example f uses no linear resources from the surrounding context, so it has a type !(Int -o Int):
 
 let f = fun y : Int -> y + 1
 
@@ -17,7 +17,7 @@ f ^x
 x
 
 
-# for braking up lines use \
+# For breaking up lines use \
 
 # Arrays.
 
@@ -33,7 +33,7 @@ let int_and_arr = (100, [1, 2, 3])
 match int_and_arr with (v, a) -> set a 2 v
 
 
-# When using Sum type (A + B) you must define what type each side has
+# When using a sum type (A + B) you must define what type each side has.
 
 let s = (inl 3 : !Int + !Int)
 match s with inl x -> 1 | inr y -> 2
@@ -52,8 +52,8 @@ snd with_structure
 let f = fun x : !Int -> x + 1
 f 3
 
-# Recursive functions
-# Function of type !(A -o B) can be a recursive function
+# Recursive functions.
+# A function of type !(A -o B) can be recursive.
 
 let rec f from !Int to Int = \
     fun x : !Int -> \
@@ -64,7 +64,7 @@ f 1
 
 
 # If-then-else.
-# Each branch of if-then-else statment should use exactly the same linear resources.
+# Each branch of an if-then-else expression should use exactly the same linear resources.
 
 let a = [1, 2, 3, 4]
 let c = 1
@@ -72,7 +72,7 @@ let c = 1
 if c < 10 then a else set a 0 100
 
 # Comparing.
-# You can use < between numbers and = with most types
+# You can use < between numbers and = with most types.
 
 let a = [1, 2, 3]
 a = [1, 2, 3]
@@ -81,7 +81,8 @@ a = [1, 2, 3]
 
 (inl ^3 : Int + Int) = (inl ^3 : Int + Int)
 
-# Example programs
+
+# Example programs.
 
 let option_find = fun a : Array !Int -> fun i : !Int -> \
         match (length a) with (l, a) -> \

@@ -1,6 +1,6 @@
 (executable
  (name line_mix)
- (libraries zoo utils)
+ (libraries zoo)
  (promote
   (until-clean)
   (into ../..)))
