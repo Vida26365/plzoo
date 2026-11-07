@@ -91,6 +91,8 @@ plain_app_expr:
   | MAKE                            { Make  }
   | LENGTH                          { Length  }
   | LOOKUP                          { Lookup  }
+  | GET                             { Get  }
+  | MODIFY                          { Modify  }
   | INL e = atom_expr { Inl e }
   | INR e = atom_expr { Inr e }
   | FST e = atom_expr { Fst e }
