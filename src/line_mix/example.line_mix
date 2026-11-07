@@ -23,15 +23,15 @@ x
 
 let arr = [1, 2, 3, 4]
 let len_and_arr = length arr
-let arr = match len_and_arr with (l, a) -> \
-    match swap a (l - 1) 100 with (v, a) -> a
-arr
+#let arr = match len_and_arr with (l, a) -> \
+#    match swap a (l - 1) 100 with (v, a) -> a
+#arr
 
 
 # Pair type.
 
 let int_and_arr = (100, [1, 2, 3])
-match int_and_arr with (v, a) -> swap a 2 v
+# match int_and_arr with (v, a) -> swap a 2 v
 
 
 # When using a sum type (A + B) you must define what type each side has.
@@ -42,11 +42,11 @@ match s with inl x -> 1 | inr y -> 2
 
 # With type.
 
-let a = [1, 2, 3, 4]
+# let a = [1, 2, 3, 4]
 
-let with_structure = a & (swap a 0 100)
+# let with_structure = a & (swap a 0 100)
 
-snd with_structure
+# snd with_structure
 
 # Functions.
 
@@ -67,10 +67,10 @@ f 1
 # If-then-else.
 # Each branch of an if-then-else expression should use exactly the same linear resources.
 
-let a = [1, 2, 3, 4]
-let c = 1
+#let a = [1, 2, 3, 4]
+#let c = 1
 
-if c < 10 then a else match swap a 0 100 with (v, a) -> a
+# if c < 10 then a else match swap a 0 100 with (v, a) -> a
 
 # Comparing.
 # You can use < between numbers and = with most types.
@@ -85,18 +85,18 @@ a = [1, 2, 3]
 
 # Example programs.
 
-let option_find = fun a : Array !Int -> fun i : !Int -> \
-        match (length a) with (l, a) -> \
-            if i < l \
-            then (inl (lookup a i) : (!Int * Array !Int) +  Array !Int) \
-            else (inr a : (!Int * Array !Int) +  Array !Int)
+# let option_find = fun a : Array !Int -> fun i : !Int -> \
+#         match (length a) with (l, a) -> \
+#             if i < l \
+#             then (inl (lookup a i) : (!Int * Array !Int) +  Array !Int) \
+#             else (inr a : (!Int * Array !Int) +  Array !Int)
 
 
-let a = [1, 2, 3, 4]
-let option = option_find a 100
-
-match option with \
-    inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
+# let a = [1, 2, 3, 4]
+# let option = option_find a 100
+# 
+# match option with \
+#     inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
 
 
 
