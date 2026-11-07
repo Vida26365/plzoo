@@ -18,7 +18,7 @@
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
-%token MAKE LENGTH LOOKUP SWAP
+%token MAKE LENGTH LOOKUP MODIFY GET
 %token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
 %token EOF
 
@@ -52,18 +52,15 @@ command:
   | LET x = VAR EQUAL e = expr 
     { Def (x, e) }
   | LET x = VAR COLON t = ltype EQUAL e = expr 
-    { Def (x, Annot (e, t)) }
+    { Def (x, Zoo.locate ~loc:e.Zoo.loc (Annot (e, t))) }
   | LET REC x = VAR FROM t1 = ltype TO t2 = ltype EQUAL e = expr 
     { DefRec (x, t1, t2, e) }
-  // | LET HOLD x = VAR EQUAL e = expr 
-  //   { DefHold (x, e) }
-  // | LET HOLD x = VAR COLON t = ltype EQUAL e = expr 
-  //   { DefHold (x, Annot (e, t)) }
   | e = expr 
     { Expr e }
 
 
-expr:
+expr: mark_position(plain_expr) { $1 }
+plain_expr:
   | FUN x = VAR COLON t = ltype ARROW e = expr
     { Fun (x, t, e) }
   | IF cond = expr THEN e1 = expr ELSE e2 = expr
@@ -72,10 +69,11 @@ expr:
     { Match (scrut, x, left, y, right) }
   | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
     { Split (pair, x, y, body) }
-  | e = infix_expr
+  | e = plain_infix_expr
     { e }
 
-infix_expr:
+infix_expr: mark_position(plain_infix_expr) { $1 }
+plain_infix_expr:
   | e1 = infix_expr AMP e2 = infix_expr     { Bundle (e1, e2) }
   | e1 = infix_expr EQUAL e2 = infix_expr   { Equal (e1, e2) }
   | e1 = infix_expr LESS e2 = infix_expr    { Less (e1, e2) }
@@ -84,22 +82,23 @@ infix_expr:
   | e1 = infix_expr TIMES e2 = infix_expr   { Times (e1, e2) }
   | e1 = infix_expr DIVIDE e2 = infix_expr  { Divide (e1, e2) }
   | e1 = infix_expr MOD e2 = infix_expr     { Mod (e1, e2) }
-  | e = app_expr { e }
+  | e = plain_app_expr { e }
 
-app_expr:
-  | e = atom_expr { e }
+app_expr: mark_position(plain_app_expr) { $1 }
+plain_app_expr:
+  | e = plain_atom_expr                                 { e }
   | f = app_expr a = atom_expr                    { Apply (f, a) }
-  | MAKE n = atom_expr e = atom_expr              { Make (n, e) }
-  | LENGTH a = atom_expr                          { Length a }
-  | LOOKUP a = atom_expr i = atom_expr            { Lookup (a, i) }
-  | SWAP a = atom_expr i = atom_expr v = atom_expr { Swap (a, i, v) }
+  | MAKE                            { Make  }
+  | LENGTH                          { Length  }
+  | LOOKUP                          { Lookup  }
   | INL e = atom_expr { Inl e }
   | INR e = atom_expr { Inr e }
   | FST e = atom_expr { Fst e }
   | SND e = atom_expr { Snd e }
 
-atom_expr:
-  | LPAREN e = expr RPAREN { e }
+atom_expr: mark_position(plain_atom_expr) { $1 }
+plain_atom_expr:
+  | LPAREN e = plain_expr RPAREN { e }
   | LPAREN e1 = expr COMMA e2 = expr RPAREN { Pair (e1, e2) }
   | LPAREN e = expr COLON t = ltype RPAREN  { Annot (e, t) }
   | x = VAR     { Var x }
@@ -146,3 +145,7 @@ atom_type:
   | LPAREN t = ltype RPAREN
     { t }
 
+
+mark_position(X):
+  x = X
+  { Zoo.locate ~loc:(Zoo.make_location $startpos $endpos) x }

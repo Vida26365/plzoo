@@ -67,3 +67,6 @@ let cnt = fun board : (Array (Array !Int)) -> fun i : !Int -> fun j : !Int -> \
 
 
 cnt board 3 4
+
+
+# lookup board 0

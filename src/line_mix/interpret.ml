@@ -21,17 +21,22 @@ type value =
   | VFun of environment * name * expr (* This form is needed for application. Name serves for a name of a variable that will get substituted on apply. It can be done with VClosure, but it is easier with VFun*)
   | VArr of value array
   | VRecFun of environment * name * name * expr (* recursive function: environment, function name, argument name, body *)
+  | VBuiltin of (value -> value)
 
 and environment = value Environment.t
 
 
 exception Runtime_error of string
-let runtime_error message = raise (Runtime_error message)
-let index_error message = raise (Invalid_argument message)
+let runtime_error ~loc fmt = Zoo.error ~kind:"Runtime error" ~loc fmt
+
+let index_error ~loc fmt = Zoo.error ~kind:"Index error" ~loc fmt
+
 
 
 let define = Environment.add
 let remove = Environment.remove
+
+let empty = Environment.empty
 
 let rec str_of_value = function
   | VInt x -> string_of_int x
@@ -40,7 +45,7 @@ let rec str_of_value = function
   | VInl x -> "inl " ^ str_of_value x
   | VInr x -> "inr " ^ str_of_value x
   | VWith _ -> "< & >"
-  | VFun _ | VRecFun _ -> "<fun>"
+  | VFun _ | VRecFun _ | VBuiltin _ -> "<fun>"
   | VArr arr -> (
     let string_of_value_array arr =
     let elements = Array.to_list arr |> List.map str_of_value in
@@ -49,21 +54,21 @@ let rec str_of_value = function
     string_of_value_array arr
   )
 
-let rec equal_value v1 v2 =
+let rec equal_value ~loc v1 v2 =
   match v1, v2 with
   | VInt x, VInt y -> x = y
   | VBool x, VBool y -> x = y
-  | VPair (a1, b1), VPair (a2, b2) -> equal_value a1 a2 && equal_value b1 b2
-  | VInl x, VInl y -> equal_value x y
-  | VInr x, VInr y -> equal_value x y
-  | VArr arr1, VArr arr2 -> Array.length arr1 = Array.length arr2 && Array.for_all2 equal_value arr1 arr2
-  | (VFun _ | VRecFun _ ), _ -> runtime_error "Cannot compare functions"
-  | VWith _, _ -> runtime_error "Cannot compare &-pair"
+  | VPair (a1, b1), VPair (a2, b2) -> equal_value ~loc a1 a2 && equal_value ~loc b1 b2
+  | VInl x, VInl y -> equal_value ~loc x y
+  | VInr x, VInr y -> equal_value ~loc x y
+  | VArr arr1, VArr arr2 -> Array.length arr1 = Array.length arr2 && Array.for_all2 (equal_value ~loc) arr1 arr2
+  | (VFun _ | VRecFun _ | VBuiltin _), _ -> runtime_error ~loc "Cannot compare functions"
+  | VWith _, _ -> runtime_error ~loc "Cannot compare &-pair"
   | _ -> assert false  
 
 
-let rec interp env =
-  function
+let rec interp env {Zoo.data = e; loc} : value = 
+  match e with
   | Var name -> (match Environment.find_opt name env with
       | None -> assert false
       | Some x -> x
@@ -75,11 +80,11 @@ let rec interp env =
     | VInt a, VInt b -> VInt (a * b)
     | _ -> assert false)
   | Divide (e1, e2) -> (match interp env e1, interp env e2 with 
-    | VInt _, VInt 0 -> runtime_error "Division by 0"
+    | VInt _, VInt 0 -> runtime_error ~loc "Division by 0"
     | VInt a, VInt b -> VInt (a / b)
     | _ -> assert false)
   | Mod (e1, e2) -> (match interp env e1, interp env e2 with 
-    | VInt _, VInt 0 -> runtime_error "Division by 0"
+    | VInt _, VInt 0 -> runtime_error ~loc "Division by 0"
     | VInt a, VInt b -> VInt (a mod b)
     | _ -> assert false)
   | Plus (e1, e2) -> (match interp env e1, interp env e2 with 
@@ -88,10 +93,91 @@ let rec interp env =
   | Minus (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VInt (a - b)
     | _ -> assert false)
-  | Equal (e1, e2) -> VBool (equal_value (interp env e1) (interp env e2))
+  | Equal (e1, e2) -> VBool (equal_value ~loc (interp env e1) (interp env e2))
   | Less (e1, e2) -> (match interp env e1, interp env e2 with 
     | VInt a, VInt b -> VBool (a < b)
     | _ -> assert false)
+
+
+  | Array lst -> (
+      let arr = Array.of_list lst in
+      VArr (Array.map (interp env) arr)
+  ) 
+  | Make ->
+      VBuiltin ( fun n ->
+        VBuiltin ( fun v ->
+          match n with
+          | VInt k -> VArr (Array.make k v)
+          | _ -> assert false
+        )
+      )
+  | Length ->
+      VBuiltin (fun a ->
+        match a with
+        | VArr arr -> VPair (VInt (Array.length arr), a)
+        | _ -> assert false
+      )
+  | Lookup ->
+      VBuiltin (fun i ->
+        VBuiltin (fun a ->
+          match a, i with
+          | VArr arr, VInt k ->
+              if k < 0 || k >= Array.length arr then
+                index_error ~loc "index %d out of range (array length %d)" k (Array.length arr)
+              else
+                VPair (arr.(k), VArr arr)
+          | _ -> assert false
+          )
+        )
+  | Modify ->
+      VBuiltin (fun i ->
+        VBuiltin (fun f ->
+          VBuiltin (fun a ->
+            match i, f, a with
+            | VInt i, VFun (env1, name, expr), VArr a -> (
+                let v1 = Array.get a i in
+                let env2 = define name v1 env1 in
+                let v2 = interp env2 expr in
+                Array.set a i v2;
+                VArr a
+            )
+            | _ -> assert false
+          )
+        )
+      )
+  | Get ->
+      VBuiltin (fun i ->
+        VBuiltin (fun f ->
+          VBuiltin (fun arr ->
+            match i, f, arr with
+            | VInt i, VFun (env1, name, expr), VArr a -> (
+                let v1 = Array.get a i in
+                let env2 = define name v1 env1 in
+                let v2 = interp env2 expr in
+                match v2 with
+                | VPair (result, v2) -> 
+                    Array.set a i v2;
+                    VPair (result, VArr a)
+                | _ -> assert false
+            )
+            | _ -> assert false
+          )
+        )
+      )
+
+  | Fun (x, _, body) -> VFun (remove x env, x, body)
+  | Apply (f, a) -> (
+      match interp env f with
+      | VFun (env1, x, expr) -> 
+        let env2 = define x (interp env a) env1 in
+        interp env2 expr
+      | VRecFun (env1, f, x, expr) as v -> 
+          let env2 = define x (interp env a) (define f v env1)in
+          interp env2 expr
+      | VBuiltin f -> f (interp env a)
+      | _ -> assert false
+    )
+
 
   | If (cond, e1, e2) -> (
     match interp env cond with
@@ -112,19 +198,7 @@ let rec interp env =
     | _ -> assert false
   )
 
-  | Fun (x, _, body) -> VFun (remove x env, x, body)
-  | Apply (f, a) -> (
-    match interp env f with
-    | VFun (env1, x, expr) -> 
-      let env2 = define x (interp env a) env1 in
-      interp env2 expr
-    | VRecFun (env1, f, x, expr) as v -> 
-        let env2 = define x (interp env a) (define f v env1)in
-        interp env2 expr
-    | _ -> assert false
-  )
-
-  | Inl expr -> VInl (interp env expr)
+ | Inl expr -> VInl (interp env expr)
   | Inr expr -> VInr (interp env expr)
   | Match (sum, lname, le, rname, re) -> (
     match interp env sum with
@@ -145,58 +219,8 @@ let rec interp env =
     | _ -> assert false
   )
 
-  | Array lst -> (
-      let arr = Array.of_list lst in
-      VArr (Array.map (interp env) arr)
-  ) 
-  | Make (n, expr) -> (
-    let k = match interp env n with
-    | VInt k -> k
-    | _ -> assert false
-    in
-    VArr (Array.make k (interp env expr))
-  )
-  | Length arr -> (
-    match interp env arr with
-    | VArr arr' -> VPair (VInt (Array.length arr'), VArr arr')
-    | _ -> assert false
-  )
-  | Lookup (earr, i) -> (
-    let varr = match interp env earr with
-    | VArr varr' -> varr'
-    | _ -> assert false
-    in
-    let k = match interp env i with
-      | VInt k -> k
-      | _ -> assert false
-    in
-    if not (0 <= k && k < (Array.length varr))
-        then
-          index_error "Array index out of range"
-        else 
-      VPair (Array.get varr k, VArr varr)
-    )
-  | Swap (earr, i, expr) -> (
-      let varr = match interp env earr with
-        | VArr varr -> varr
-        | _ -> assert false
-      in
-      let k = match interp env i with
-        | VInt i -> i
-        | _ -> assert false
-      in
-      if not (0 <= k && k < (Array.length varr))
-        then
-          index_error "Array index out of range"
-        else 
-          let v = Array.get varr k in
-          Array.set varr k (interp env expr);
-          VPair (v, VArr varr)
-    )
-
-
     
-let make_rec f = function
+let make_rec ~loc f = function
   | VFun (env, x, body) -> VRecFun (env, f, x, body)
-  | _ -> runtime_error "let rec expects a function"
+  | _ -> runtime_error ~loc "let rec expects a function"
 

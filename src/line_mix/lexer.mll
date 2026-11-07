@@ -26,7 +26,6 @@ rule token = parse
   | "rec"           { REC }
   | "to"            { TO }
   | "from"          { FROM }
-  (* | "hold"          { HOLD } *)
 
   | "match"         { MATCH }
   | "with"          { WITH }
@@ -42,7 +41,8 @@ rule token = parse
   | "make"          { MAKE }
   | "length"        { LENGTH }
   | "lookup"        { LOOKUP }
-  | "swap"          { SWAP }
+  | "modify"        { MODIFY }
+  | "get"           { GET }
 
 
   | "!"             { BANG }
