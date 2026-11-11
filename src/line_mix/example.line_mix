@@ -1,190 +1,133 @@
-# A tour of line_mix: a small language with linear types.
-# Every value of a linear type must be used exactly once. Values of type !t can be used any number of times.
-# Comments start with # and last until the end of the line. Every command ends with ;
+# Mixed linear types
 
+# For commenting use #.
 
+# For removing ! use ^. It turns an expression of type !A into an expression of type A.
+# When it is possible, an expression will have a type !A. 
+# For example f uses no linear resources from the surrounding context, so it has a type !(Int -o Int):
 
+let f = fun y : Int -> y + 1
 
+let x  = 5
+let z = ^x
 
-# ---------- Numbers and arithmetic ----------
+f
+f z
+f ^x
+x
 
-# Some examples of arithmetic
 
-1 + 2;
-20 / 3;
-20 % 3;
--5 + 2;
+# For breaking up lines use \
 
+# Arrays.
 
-# ---------- Booleans, comparisons and conditionals ----------
+let arr = [1, 2, 3, 4]
+let len_and_arr = length arr
+let arr = match len_and_arr with (l, a) -> a
 
-true;
-3 = 4;
-if 1 < 2 then 10 else 20;
+# length, modify, make and get can take in any array tipe, 
+# lookup can only accept arrays of non linear types
+modify
+lookup
 
+let lookup_matrix = fun i : !Int -> fun j : !Int -> \
+     fun matrix : ((!Int) Array) Array -> \
+        get i (lookup j) matrix
 
+let matrix =  [ \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4] \
+]
 
+lookup_matrix 0 3 matrix
 
-# With an annotation, the variable has exactly that type. Int is linear, so it must be used exactly once.
-let b : Int = 5;
-b + 1;
+# Empty array has any array type
+let empty_arr = []
 
-# Type ascription on an expression.
-(5 : Int);
 
+# Kill
+let a = [1, 2, 3]
+let l = match length a with (l, a) -> \
+    kill a give l
+l
 
-# ---------- Linear functions  s -o t ----------
 
-# A function must use its argument exactly once.
-fun x : Int -> x + 1;
-(fun x : Int -> x + 1) 41;
+# Local definitions
+let a = match (1, 2) with (a, b) -> \
+    let plus1and2 = a + b in \
+    plus1and2 + 3
+a
 
-# Curried functions.
-(fun x : Int -> fun y : Int -> x - y) 10 3;
 
-# Higher-order functions.
-(fun f : Int -o Int -> f 5) (fun n : Int -> n + 1);
 
-# A plain function is itself linear: it disappears after one call.
-let succ = fun n : Int -> n + 1;
-succ 41;
+# Pair type.
 
+let int_and_arr = (100, [1, 2, 3])
+match int_and_arr with (v, a) -> modify 2 (fun x : !Int -> v) a
 
-# ---------- Promotion !e: reusable values ----------
 
-# !e has type !t. It may not use any linear variables.
-!5;
+# Sum type
+# If not annotated the unknown type is assumed to be linear
 
-# A !t can be used where a t is expected.
-(fun x : Int -> x) !3;
+let s = inl 3
+match s with inl x -> 1 | inr y -> y
 
-# A reusable function can be called many times.
-let inc = !(fun n : Int -> n + 1);
-inc 1;
-inc 2;
+let s = (inl 3 : !Int + !Int)
+match s with inl x -> 1 | inr y -> 2
 
-# An argument of type !Int may be used many times inside the function.
-let square = !(fun n : !Int -> n * n);
-square !5;
-square a;
 
-# The type of a reusable function can be written explicitly.
-let twice : !(Int -o Int) = !(fun n : Int -> n * 2);
-twice 3;
-twice 4;
+# With type.
 
-# Taking a ! value apart: x is unrestricted in the body.
-match !7 with !x -> x + x;
+let a = [1, 2, 3, 4]
 
+let with_structure = a & (lookup 0 a)
 
-# ---------- Recursive functions  !(s -o t) ----------
-# Needs complete type annotation
+snd with_structure
 
-let rec count = (fun x : !Int -> if x < 10 then count (x + 1) else 10);
-count 11;
 
+# Functions.
 
+let f = fun x : !Int -> x + 1
+f 3
 
+# Recursive functions.
+# A function of type !(A -o B) can be recursive.
 
-# ---------- Tensor pairs  s * t ----------
+let rec f from !Int to Int = \
+    fun x : !Int -> \
+        if x = 10 then ^x \
+        else f (x + 1)
 
-# Both components of a pair must be used.
-(1, true);
-let p = (3, 4);
-match p with (x, y) -> x * y;
-match (1, 2) with x, y -> x + y;
+f 1
 
 
-# ---------- Sums  s + t ----------
+# If-then-else.
+# Each branch of an if-then-else expression should use exactly the same linear resources.
 
-# inl and inr need a type annotation.
-(inl 5 : Int + Bool);
-let s : Int + Bool = inr true;
+let a = [1, 2, 3, 4]
+let c = 11
 
-# Both branches must use the same resources.
-match s with inl n -> n + 1 | inr c -> if c then 1 else 0;
+if c < 10 \ 
+        then a \
+        else \ 
+            match get 0 (fun x : !Int -> (x, 100)) a with (v, a) -> a
 
+# Comparing.
+# You can use < between numbers and = with most types.
 
-# ---------- With  s & t ----------
+let a = [1, 2, 3]
+a = [1, 2, 3]
 
-# Both components are built from the same resources, and only one of them is used.
-let a = 1;
-let w = a & a + 1;
-fst w;
-snd (3 & 4);
+(1, 2) = (3, 2)
 
+inl ^3  = inl ^3 
 
-# ---------- Arrays  Arr t ----------
 
-[1, 2, 3];
-make 3 0;
-set [10, 20, 30] 1 99;
 
-# An array is linear, so length and lookup give the array back together with the result.
-#   length : Arr t -o Int * Arr t
-#   lookup : Arr t -o Int -o t * Arr t
-length [1, 2, 3];
-lookup [10, 20, 30] 1;
 
-# The array type: Arr t is an array of elements of type t.
-let arr : Arr Int = [1, 2, 3];
-match length arr with (n, arr) -> set arr 0 n;
 
-# The returned array is used for the next operation.
-let arr = [10, 20, 30];
-match lookup arr 2 with (x, arr) -> set arr 0 x;
 
 
-# ---------- Strings  Str ----------
 
-# A string literal has type !Str, so it can be used many times.
-"hello";
-let greeting = "hello";
-greeting ^ ", " ^ greeting;
-
-# Escapes such as \n and \t work inside strings.
-"line one\nline two";
-
-# With an annotation a string is linear, like an Int.
-let name : Str = "line_mix";
-"Hi, " ^ name;
-
-
-# ---------- Local definitions  let x = e1 in e2 ----------
-
-let x = 3 in x * x;
-# m has type Int, which is linear, so it is used only once.
-(fun n : Int -> let m = n + 1 in m * 2) 4;
-
-# () is the only value of type !Unit. It can be thrown away.
-();
-
-
-# ---------- Files  File ----------
-
-# A file handle is linear: it must be used exactly once, so every file has to be closed exactly once.
-#   open  : Str -o File           (creates the file if needed and keeps its contents)
-#   write : File -o Str -o File   (the first write after open replaces the contents, later ones append)
-#   read  : File -o Str * File    (the whole contents)
-#   close : File -o !Unit
-# Every write and read gives back a new handle, which is used for the next operation.
-
-let f = open "example_output.txt";
-let f = write f "first line\n";
-let f = write f ("second" ^ " line\n");
-
-# read returns the contents and the handle. let _ = close f in ... closes the handle and returns s.
-match read f with (s, f) -> let _ = close f in s;
-
-# A function that reads the old contents, replaces them and closes the handle.
-# The handle never escapes, and it is closed at the end.
-let replace = fun f : File ->
-  match read f with (old, f) ->
-    match read (write f "replaced\n") with (new, f) ->
-      let _ = close f in old ^ "became " ^ new;
-replace (open "example_output.txt");
-
-# These are rejected by the type checker:
-#   fun f : File -> 5;                          f is never closed
-#   fun f : File -> let u = close f in close f; f is closed twice
-#   !(open "a.txt");                            a file cannot be made unrestricted

@@ -6,27 +6,30 @@
 let var = ['_' 'a'-'z' 'A'-'Z'] ['_' 'a'-'z' 'A'-'Z' '0'-'9']*
 
 rule token = parse
-    '#' [^'\n']*    { token lexbuf }
-  | '\n'            { Lexing.new_line lexbuf; token lexbuf }
+  |  '#' [^'\n']*    { token lexbuf }
+  | '\\' [' ' '\t']* '\r'? '\n'        { Lexing.new_line lexbuf; token lexbuf }
+  | '\r'? '\n'      { Lexing.new_line lexbuf; NEWLINE }
   | [' ' '\t']      { token lexbuf }
-  | '-'? ['0'-'9']+ { INT (int_of_string(lexeme lexbuf)) }
+  | ['0'-'9']+ { INT (int_of_string(lexeme lexbuf)) }
 
   | "true"          { TRUE }
   | "false"         { FALSE }
 
   | "Int"           { TYPE_INT }
   | "Bool"          { TYPE_BOOL }
-  | "Arr"           { TYPE_ARR }
-  | "Str"           { TYPE_STR }
-  | "Unit"          { TYPE_UNIT }
-  | "File"          { TYPE_FILE }
+  | "Array"           { TYPE_ARR }
 
   | "fst"           { FST }
   | "snd"           { SND }
 
   | "let"           { LET }
   | "rec"           { REC }
+  | "to"            { TO }
+  | "from"          { FROM }
   | "in"            { IN }
+
+  | "kill"          { KILL }
+  | "give"           { GIVE }
 
   | "match"         { MATCH }
   | "with"          { WITH }
@@ -42,16 +45,12 @@ rule token = parse
   | "make"          { MAKE }
   | "length"        { LENGTH }
   | "lookup"        { LOOKUP }
-  | "set"           { SET }
-
-  | "open"          { OPEN }
-  | "read"          { READ }
-  | "write"         { WRITE }
-  | "close"         { CLOSE }
-
-  | '"' ([^ '"' '\n']* as s) '"' { STRING (Scanf.unescaped s) }
+  | "modify"        { MODIFY }
+  | "get"           { GET }
 
 
+  | "!"             { BANG }
+  | '^'             { CARET }
 
   | '%'             { MOD }
   | '&'             { AMP }
@@ -59,7 +58,6 @@ rule token = parse
   | ')'             { RPAREN }
   | '*'             { TIMES }
   | '+'             { PLUS }
-  | '^'             { CARET }
   | ','             { COMMA }
   | "-o"            { LOLLI }
   | "->"            { ARROW }
@@ -69,9 +67,9 @@ rule token = parse
   | '='             { EQUAL }
   | '|'             { ALTERNATIVE }
   | ':'             { COLON }
-  | ';'             { SEMICOLON }
+  (* | ';'             { SEMICOLON } *)
   | '['             { LBRACKET } 
   | ']'             { RBRACKET }
-  | var             { VAR (lexeme lexbuf) }  (* Zakaj je to *)
+  | var             { VAR (lexeme lexbuf) }
   | eof             { EOF }
 

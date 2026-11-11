@@ -1,0 +1,140 @@
+# function cnt counts how many ones there are in 8 neighboring squares on board of a square (i, j). 
+# Other functions are helper functions.
+
+
+let board = [ \
+    [1, 0, 0, 0, 0, 0, 0],\
+    [0, 0, 0, 0, 0, 0, 0],\
+    [0, 0, 0, 1, 1, 0, 0],\
+    [0, 0, 1, 1, 0, 0, 0],\
+    [0, 0, 0, 0, 1, 0, 0],\
+    [0, 0, 0, 0, 0, 0, 0],\
+    [0, 0, 0, 0, 0, 0, 0]\
+]
+
+let lookup_matrix = fun i : !Int -> fun j : !Int -> \
+     fun matrix : !Int Array Array -> \
+        get i (lookup j) matrix
+
+let length_row = fun m : !Int Array Array -> \
+    get 0 (length) m
+
+
+# b = board
+let cnt3inrow = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+        if j = 0 then \
+            match lookup_matrix i j b with (p1, b) -> \
+                match lookup_matrix i (j+1) b with (p2, b) -> \
+                    (p1 + p2, b) \
+        else match length_row b with (l, b) -> \
+        if j = l-1 then\
+            match lookup_matrix i j b with (p1, b) -> \
+                match lookup_matrix i (j-1) b with (p2, b) -> \
+                    (p1 + p2, b) \
+        else \
+            match lookup_matrix i j b with (p1, b) -> \
+                match lookup_matrix i (j-1) b with (p0, b) -> \
+                    match lookup_matrix i (j + 1) b with (p2, b) -> \
+                        (p0 + p1 + p2, b)
+
+let cnt9 = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+        if i = 0 then \
+            match cnt3inrow i j b with (p1, b) -> \
+                match cnt3inrow (i+1) j b with (p2, b) -> \
+                    (p1 + p2, b) \
+        else match length b with (l, b) -> \
+        if i = l-1 then\
+            match cnt3inrow i j b with (p1, b) -> \
+                match cnt3inrow (i-1) j b with (p2, b) -> \
+                    (p1 + p2, b) \
+        else \
+            match cnt3inrow i j b with (p1, b) -> \
+                match cnt3inrow (i-1) j b with (p0, b) -> \
+                    match cnt3inrow (i+1) j b with (p2, b) -> \
+                        (p0 + p1 + p2, b)
+
+let cnt = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+        match cnt9 i j b with (p, b) -> \
+            match lookup_matrix i j b with (c, b) -> \
+                (p - c, b)
+
+
+# true = live cel and underpopulation
+let check_underpopulation = fun i : !Int -> fun j : !Int -> \
+     fun b : ((!Int) Array) Array -> \
+        match cnt i j b with (p, b) -> \
+            if p < 2 then \
+                (true, b) \
+            else \
+                (false, b) \
+
+# true = overpopulation
+let check_overpopulation = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+        match cnt i j b with (p, b) -> \
+            if 3 < p then \
+                (true, b) \
+            else \
+                (false, b) \
+
+# true = reproduction
+let reproduction = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+        match cnt i j b with (p, b) -> \
+            if p = 3 then (true, b) else (false, b)
+
+
+let new_gen_cel = fun i : !Int -> fun j : !Int -> \
+     fun b : !Int Array Array -> \
+     match lookup_matrix i j b with (c, b) -> \
+        if c = 1 then \
+            match check_overpopulation i j b with (tf, b) -> \
+                if tf then (0, b) \
+                else match check_underpopulation i j b with (tf, b) -> \
+                    if tf then (0, b) else (1, b) \
+        else \
+            match reproduction i j b with (tf, b) -> \
+            if tf then (1, b) else (0, b) 
+
+
+
+let rec modify_row \
+    from !Int \
+    to !Int \
+    -o !Int Array \
+    -o !Int Array Array \
+    -o !Int Array * !Int Array Array = \
+        fun i : (!Int) -> fun j : !Int -> fun row : !Int Array -> fun b : !Int Array Array -> \
+            if j = 0 then (row, b) \
+            else \
+                match new_gen_cel i (j - 1) b with (c, b) -> \
+                    modify_row i (j-1) \
+                        (modify (j - 1) (fun x : !Int -> c) row) \
+                        b
+
+
+
+
+let new_board = fun b : !Int Array Array -> \
+    match modify_row 0 7 (make 7 0) b with (r1, b) -> \
+    match modify_row 1 7 (make 7 0) b with (r2, b) -> \
+    match modify_row 2 7 (make 7 0) b with (r3, b) -> \
+    match modify_row 3 7 (make 7 0) b with (r4, b) -> \
+    match modify_row 4 7 (make 7 0) b with (r5, b) -> \
+    match modify_row 5 7 (make 7 0) b with (r6, b) -> \
+    match modify_row 6 7 (make 7 0) b with (r7, b) -> \
+    kill b give \
+    [r1, r2, r3, r4, r5, r6, r7]
+
+
+
+let rec nth_step from !Int to !Int Array Array -o !Int Array Array = \
+    fun n : !Int -> fun b : !Int Array Array -> \
+        if n = 0 then b \
+        else \
+            nth_step (n-1) (new_board b)
+
+nth_step 2 board

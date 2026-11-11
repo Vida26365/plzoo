@@ -11,19 +11,21 @@ module Line = Zoo.Main(struct
 
   type environment = context * runtime
 
+
   let options = []
 
   let initial_environment = (Type_checker.empty, Interpret.Environment.empty)
 
-  let toplevel_parser = Some (fun _ -> Parser.toplevel Lexer.token)
-
   let file_parser = Some (fun _ -> Parser.file Lexer.token)
 
-  let check_redefinition ctx x =
+  let toplevel_parser = Some (fun _ -> Parser.toplevel Lexer.token)
+
+    let check_redefinition ~loc ctx x =
     match Type_checker.Context.find_opt x ctx with
     | Some ty -> if Type_checker.is_linear ty then
-      Type_checker.linear_error "linear variable %s is redefined before it is used" x
+      Type_checker.linear_error ~loc "linear variable %s is redefined before it is used" x
     | _ -> ()
+
 
 (* What to do in exec: *)
 (* - type check *)
@@ -31,25 +33,35 @@ module Line = Zoo.Main(struct
 (* - return the updated environment *)
   let exec (ctx, env) = function
     | Syntax.Expr e ->
-        let ty, ctx' = Type_checker.infer ctx e in 
+        let ty, ctx' = Type_checker.infer ctx e in
+        let ty = Type_checker.substitute ty in
         let value = Interpret.interp env e in
         Zoo.print_info "%s : %s@." (Interpret.str_of_value value) (Type_checker.string_of_ltype ty) ;
-      (ctx', env)
+        (ctx', env)
 
-    | Syntax.Def (x, e) -> 
-      check_redefinition ctx x ;
-      let ty, ctx' = Type_checker.infer ctx e in
-      let v = Interpret.interp env e in
-      (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
+    | Syntax.Def (x, ({Zoo.loc; _} as e)) ->
+        let ty, ctx' = Type_checker.infer ctx e in
+        let ty = Type_checker.substitute ty in
+        let v = Interpret.interp env e in
+        check_redefinition ~loc ctx' x ;
+        Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ;
+        (Type_checker.define ctx' x ty, Interpret.define x v env)
 
-    | Syntax.DefRec (x, ty, e) -> 
-      check_redefinition ctx x ;
-      let _, ctx' = Type_checker.check_rec ctx x ty e in
-      let v = Interpret.make_rec x (Interpret.interp env e) in
-      (Type_checker.define ctx' x ty, Interpret.Environment.add x v env)
+    | Syntax.DefRec (f, a, b, ({Zoo.loc; _} as e)) ->
+    (* add !(A -o B) in context and check if the function is of type !(A -o B) *)
+        check_redefinition ~loc ctx f ;
+        let ty, ctx1 = Type_checker.check_rec ctx f a b e in
+        let ty = Type_checker.substitute ty in
+        let value = Interpret.interp env e in
+        let v = Interpret.make_rec ~loc f value in
+        Zoo.print_info "%s : %s@." f (Type_checker.string_of_ltype ty) ;
+        (Type_checker.define ctx1 f ty, Interpret.define f v env)
+
+    | Syntax.Skip -> (ctx, env)
 
     | Syntax.Quit -> exit 0
-    
+
 end) ;;
+
 
 Line.main ()
