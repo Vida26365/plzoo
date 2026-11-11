@@ -46,7 +46,6 @@ that gets later substituted to the intended type
 let counter = ref 0
 let fresh () = incr counter; B !counter
 
-(** Global substitution: B n -> type. *)
 (** Hash table holds what type unknown type is *)
 let subst : (int, ltype) Hashtbl.t = Hashtbl.create 16
 
@@ -80,7 +79,7 @@ let rec identify ~loc want got =
         if occurs n t then (* this never happens*)
             typing_error ~loc "cannot construct infinite type %s = %s"
                 (string_of_ltype (B n)) (string_of_ltype t);
-        (** Got idea what the unkown type should be? Add it to hashtable. *)
+        (* Got idea what the unkown type should be? Add it to hashtable. *)
         Hashtbl.replace subst n t
     | LInt, LInt | LBool, LBool  -> ()
     | LBang a, LBang b -> identify ~loc a b
@@ -141,18 +140,6 @@ let merge_types ~loc ty1 ty2 =
   | _, LBang _  -> ty1
   | _, _ -> ty2
 
-
-
-
-let rec subst_type option = function
-  | B _ as v -> (match List.assoc_opt v option with Some t -> t | None -> v)
-  | LInt | LBool as t -> t
-  | LArr t -> LArr (subst_type option t)
-  | LBang t -> LBang (subst_type option t)
-  | LLolli (a, b) -> LLolli (subst_type option a, subst_type option b)
-  | LAnd (a, b)   -> LAnd   (subst_type option a, subst_type option b)
-  | LWith (a, b)  -> LWith  (subst_type option a, subst_type option b)
-  | LPlus (a, b)  -> LPlus  (subst_type option a, subst_type option b)
 
 
 let rec check (ctx : context) ({Zoo.data = e'; loc} as e) ty : context =

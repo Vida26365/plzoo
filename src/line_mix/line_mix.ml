@@ -34,14 +34,14 @@ module Line = Zoo.Main(struct
   let exec (ctx, env) = function
     | Syntax.Expr e ->
         let ty, ctx' = Type_checker.infer ctx e in
-        let ty = Type_checker.resolve ty in
+        let ty = Type_checker.substitute ty in
         let value = Interpret.interp env e in
         Zoo.print_info "%s : %s@." (Interpret.str_of_value value) (Type_checker.string_of_ltype ty) ;
         (ctx', env)
 
     | Syntax.Def (x, ({Zoo.loc; _} as e)) ->
         let ty, ctx' = Type_checker.infer ctx e in
-        let ty = Type_checker.resolve ty in
+        let ty = Type_checker.substitute ty in
         let v = Interpret.interp env e in
         check_redefinition ~loc ctx' x ;
         Zoo.print_info "%s : %s@." x (Type_checker.string_of_ltype ty) ;
@@ -51,7 +51,7 @@ module Line = Zoo.Main(struct
     (* add !(A -o B) in context and check if the function is of type !(A -o B) *)
         check_redefinition ~loc ctx f ;
         let ty, ctx1 = Type_checker.check_rec ctx f a b e in
-        let ty = Type_checker.resolve ty in
+        let ty = Type_checker.substitute ty in
         let value = Interpret.interp env e in
         let v = Interpret.make_rec ~loc f value in
         Zoo.print_info "%s : %s@." f (Type_checker.string_of_ltype ty) ;
