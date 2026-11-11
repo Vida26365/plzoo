@@ -13,12 +13,13 @@
 %token COLON COMMA
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG CARET
-%token LET REC TO FROM
+%token LET REC TO FROM IN
 %token MATCH WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
 %token MAKE LENGTH LOOKUP MODIFY GET
+%token KILL GIVE
 %token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
 %token EOF
 
@@ -69,6 +70,10 @@ plain_expr:
     { Match (scrut, x, left, y, right) }
   | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
     { Split (pair, x, y, body) }
+  | LET x = VAR EQUAL e1 = expr IN e2 = expr
+    { Let (x, e1, e2)}
+  | KILL x = VAR GIVE e = expr
+    { Kill (x, e) }
   | e = plain_infix_expr
     { e }
 
@@ -110,12 +115,12 @@ plain_atom_expr:
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET { Array es }
   | CARET e = atom_expr { Demote e }
 
-(* Types, from loosest to tightest binding: s -o t (right assoc) ; s + t ; s & t ; s * t *)
 ltype:
   | t1 = plus_type LOLLI t2 = ltype
     { LLolli (t1, t2) }
   | t = plus_type
     { t }
+
 
 plus_type:
   | t1 = with_type PLUS t2 = plus_type
@@ -130,10 +135,17 @@ with_type:
     { t }
 
 tensor_type:
-  | t1 = atom_type TIMES t2 = tensor_type
+  | t1 = arr_type TIMES t2 = tensor_type
     { LAnd (t1, t2) }
+  | t = arr_type
+    { t }
+
+arr_type:
+  |  t = arr_type TYPE_ARR
+    { LArr t }
   | t = atom_type
     { t }
+
 
 atom_type:
   | TYPE_INT
@@ -142,8 +154,6 @@ atom_type:
     { LBool }
   | BANG t = atom_type
     { LBang t }
-  | TYPE_ARR t = atom_type
-    { LArr t }
   | LPAREN t = ltype RPAREN
     { t }
 

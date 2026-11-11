@@ -17,84 +17,96 @@ let empty : context = Context.empty
 let define ctx x ty = Context.add x ty ctx
 let remove ctx x = Context.remove x ctx
 
-let rec string_of_ltype = function
-  | LInt -> "Int"
-  | LBool -> "Bool"
-  | LBang t -> Printf.sprintf "!%s" (string_of_ltype t)
-  | LLolli (t1, t2) -> Printf.sprintf "(%s -o %s)"    (string_of_ltype t1) (string_of_ltype t2)
-  | LAnd (t1, t2) -> Printf.sprintf "(%s * %s)" (string_of_ltype t1) (string_of_ltype t2)
-  | LWith (t1, t2) -> Printf.sprintf "(%s & %s)" (string_of_ltype t1) (string_of_ltype t2)
-  | LPlus (t1, t2) -> Printf.sprintf "(%s + %s)" (string_of_ltype t1) (string_of_ltype t2)
-  | LArr t -> Printf.sprintf "(%s Array)" (string_of_ltype t)
-  | A -> "A"
-  | B k -> Printf.sprintf "(A%s)" (string_of_int k)
+
+let string_of_ltype t =
+    let rec aux p t =
+    let lvl, s =
+        match t with
+        | LInt -> 6, "Int"
+        | LBool -> 6, "Bool"
+        | B k -> 6, "A" ^ string_of_int k
+        | LBang t -> 6, "!" ^ aux 6 t
+        | LArr t -> 5, aux 5 t ^ " Array"
+        | LAnd (a, b) -> 4, aux 5 a ^ " * " ^ aux 4 b
+        | LWith (a, b) -> 3, aux 4 a ^ " & " ^ aux 3 b
+        | LPlus (a, b) -> 2, aux 3 a ^ " + " ^ aux 2 b
+        | LLolli (a, b) -> 0, aux 2 a ^ " -o " ^ aux 0 b
+    in
+    if lvl < p then "(" ^ s ^ ")" else s
+    in
+    aux 0 t
 
 
-
+(** Builtin functions (lookup, modify, ...) can accept any type of array.
+Solution: Each time a builtin function is used a new type is created, 
+that gets later substituted to the intended type
+*)
 
 (** Global counter for fresh type variables. *)
 let counter = ref 0
 let fresh () = incr counter; B !counter
 
-(** Global substitution: B n ↦ type. *)
+(** Global substitution: B n -> type. *)
+(** Hash table holds what type unknown type is *)
 let subst : (int, ltype) Hashtbl.t = Hashtbl.create 16
 
-(** Apply the substitution all the way down. *)
-let rec resolve = function
+(** Apply the substitution of types all the way down. *)
+let rec substitute = function
   | B n as t ->
       (match Hashtbl.find_opt subst n with
-       | Some t' -> resolve t'
+       | Some t' -> substitute t'
        | None -> t)
-  | LInt | LBool | A as t -> t
-  | LArr t -> LArr (resolve t)
-  | LBang t -> LBang (resolve t)
-  | LLolli (a, b) -> LLolli (resolve a, resolve b)
-  | LAnd (a, b) -> LAnd (resolve a, resolve b)
-  | LWith (a, b) -> LWith (resolve a, resolve b)
-  | LPlus (a, b) -> LPlus (resolve a, resolve b)
+  | LInt | LBool  as t -> t
+  | LArr t -> LArr (substitute t)
+  | LBang t -> LBang (substitute t)
+  | LLolli (a, b) -> LLolli (substitute a, substitute b)
+  | LAnd (a, b) -> LAnd (substitute a, substitute b)
+  | LWith (a, b) -> LWith (substitute a, substitute b)
+  | LPlus (a, b) -> LPlus (substitute a, substitute b)
 
 let rec occurs n t =
-  match resolve t with
+  match substitute t with
   | B m -> n = m
   | LArr t | LBang t -> occurs n t
   | LLolli (a, b) | LAnd (a, b) | LWith (a, b) | LPlus (a, b) -> occurs n a || occurs n b
-  | LInt | LBool | A -> false
+  | LInt | LBool  -> false
 
 (** [unify ~loc want got]: [got] may be used where [want] is expected.
     A !t may be used where t is expected. *)
-let rec unify ~loc want got =
-  match resolve want, resolve got with
-  | B n, B m when n = m -> ()
-  | B n, t | t, B n ->
-      if occurs n t then
-        typing_error ~loc "cannot construct infinite type %s = %s"
-          (string_of_ltype (B n)) (string_of_ltype t);
-      Hashtbl.replace subst n t
-  | LInt, LInt | LBool, LBool | A, A -> ()
-  | LBang a, LBang b -> unify ~loc a b
-  | a, LBang b -> unify ~loc a b
-  | LArr a, LArr b -> unify ~loc a b
-  | LLolli (a1, b1), LLolli (a2, b2)
-  | LAnd (a1, b1), LAnd (a2, b2)
-  | LWith (a1, b1), LWith (a2, b2)
-  | LPlus (a1, b1), LPlus (a2, b2) -> unify ~loc a1 a2; unify ~loc b1 b2
-  | w, g ->
-      typing_error ~loc "expected type %s but got %s"
-        (string_of_ltype (resolve w)) (string_of_ltype (resolve g))
+let rec identify ~loc want got =
+    match substitute want, substitute got with
+    | B n, B m when n = m -> ()
+    | B n, t | t, B n ->
+        if occurs n t then (* this never happens*)
+            typing_error ~loc "cannot construct infinite type %s = %s"
+                (string_of_ltype (B n)) (string_of_ltype t);
+        (** Got idea what the unkown type should be? Add it to hashtable. *)
+        Hashtbl.replace subst n t
+    | LInt, LInt | LBool, LBool  -> ()
+    | LBang a, LBang b -> identify ~loc a b
+    | a, LBang b -> identify ~loc a b
+    | LArr a, LArr b -> identify ~loc a b
+    | LLolli (a1, b1), LLolli (a2, b2)
+    | LAnd (a1, b1), LAnd (a2, b2)
+    | LWith (a1, b1), LWith (a2, b2)
+    | LPlus (a1, b1), LPlus (a2, b2) -> identify ~loc a1 a2; identify ~loc b1 b2
+    | w, g ->
+        typing_error ~loc "expected type %s but got %s"
+        (string_of_ltype (substitute w)) (string_of_ltype (substitute g))
 
-
-let array_error ty = typing_error "this expression has type %s but is used as if it has type Array" (string_of_ltype ty)
 
 let is_linear ty =
-  match resolve ty with
-  | LBang _ -> false
-  | _ -> true
+    match substitute ty with
+    | LBang _ -> false
+    | _ -> true
 
 let unwrap ty =
-  match resolve ty with
-  | LBang ty -> ty
-  | ty -> ty
+    match substitute ty with
+    | LBang ty -> ty
+    | ty -> ty
 
+
+(** Removes bounded variable. If linear variable isnt used (for example in a function or a match) raise error *)
 let remove_bound ~loc before after x = (
   (match Context.find_opt x after with
    | Some ty when is_linear ty -> linear_error ~loc "linear variable %s is never used" x
@@ -106,10 +118,10 @@ let remove_bound ~loc before after x = (
 
 
 let consumes_linear before after =
-  Context.exists (fun x ty -> is_linear ty && not (Context.mem x after)) before
+    Context.exists (fun x ty -> is_linear ty && not (Context.mem x after)) before
 
 let require_same_context ~loc ctx1 ctx2 =
-  if not (Context.equal (fun t1 t2 -> resolve t1 = resolve t2) ctx1 ctx2) then
+  if not (Context.equal (fun t1 t2 -> substitute t1 = substitute t2) ctx1 ctx2) then
     linear_error ~loc
       "the two branches must use at the end have the same context"
 
@@ -131,25 +143,9 @@ let merge_types ~loc ty1 ty2 =
 
 
 
-  let rec indentify ~loc option want got =
-    match want, got with
-    | (A | B _), _ ->
-        (match List.assoc_opt want option with
-        | None -> (want, got)::option
-        | Some t when t = got -> option
-        | Some t -> typing_error ~loc "expected %s but got %s" (string_of_ltype t) (string_of_ltype got))
-    | LInt, LInt | LBool, LBool -> option
-    | LArr t1, LArr t2 | LBang t1, LBang t2 -> indentify ~loc option t1 t2
-    | LLolli (a1, b1), LLolli (a2, b2)
-    | LAnd (a1, b1), LAnd (a2, b2)
-    | LWith (a1, b1), LWith (a2, b2)
-    | LPlus (a1, b1), LPlus (a2, b2) -> indentify ~loc (indentify ~loc option a1 a2) b1 b2
-    | _ -> typing_error ~loc "expected %s but got %s" (string_of_ltype want) (string_of_ltype got)
-
-
 
 let rec subst_type option = function
-  | (A | B _) as v -> (match List.assoc_opt v option with Some t -> t | None -> v)
+  | B _ as v -> (match List.assoc_opt v option with Some t -> t | None -> v)
   | LInt | LBool as t -> t
   | LArr t -> LArr (subst_type option t)
   | LBang t -> LBang (subst_type option t)
@@ -160,7 +156,7 @@ let rec subst_type option = function
 
 
 let rec check (ctx : context) ({Zoo.data = e'; loc} as e) ty : context =
-  match e', resolve ty with
+  match e', substitute ty with
   | Inl e', LPlus (lty1, _) -> check ctx e' lty1
   | Inr e', LPlus (_, lty2) -> check ctx e' lty2
   | Inl _, lty' -> typing_error ~loc "inl is used at type %s, which is not a sum type" (string_of_ltype lty')
@@ -168,20 +164,20 @@ let rec check (ctx : context) ({Zoo.data = e'; loc} as e) ty : context =
   | Array [], LArr _ -> ctx
   | _ ->
       let ety, ctx1 = infer ctx e in
-      unify ~loc ty ety;
+      identify ~loc ty ety;
       ctx1
 
 and checkish ctx ({Zoo.data = _; loc} as e) ty =
   let ety, ctx' = infer ctx e in
-  unify ~loc (unwrap ty) (unwrap ety);
-  resolve ety, ctx'
+  identify ~loc (unwrap ty) (unwrap ety);
+  substitute ety, ctx'
 
 and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
   match e' with
   | Var x ->
       (match Context.find_opt x ctx with
-       | Some ty when is_linear ty -> resolve ty, Context.remove x ctx
-       | Some ty -> resolve ty, ctx
+       | Some ty when is_linear ty -> substitute ty, Context.remove x ctx
+       | Some ty -> substitute ty, ctx
        | None -> typing_error ~loc "unbound variable %s" x)
   | Int _ -> LBang LInt, ctx
   | Bool _ -> LBang LBool, ctx
@@ -197,7 +193,7 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       LPlus (fresh (), ty), ctx1
   | Match (scrut, x, e1, y, e2) ->
       let sty, ctx1 = infer ctx scrut in
-      (match resolve sty with
+      (match substitute sty with
        | LPlus (ty1, ty2) ->
            let ctx_left1 = define ctx1 x ty1 in
            let ctx_right1 = define ctx1 y ty2 in
@@ -206,7 +202,7 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
            let ctx_left3 = remove_bound ~loc ctx1 ctx_left2 x in
            let ctx_right3 = remove_bound ~loc ctx1 ctx_right2 y in
            require_same_context ~loc ctx_left3 ctx_right3;
-           resolve ty_left, ctx_left3
+           substitute ty_left, ctx_left3
        | ty -> typing_error ~loc "this expression has type %s but match expects a Sum type" (string_of_ltype ty))
 
   | Fun (x, ty, body) ->
@@ -218,12 +214,19 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       else LBang (LLolli (ty, bty)), ctx2
   | Apply (f, a) ->
       let fty, ctx1 = infer ctx f in
-      (match resolve fty with
+      (match substitute fty with
        | LLolli (ty1, ty2) | LBang (LLolli (ty1, ty2)) ->
            let aty, ctx2 = infer ctx1 a in
-           unify ~loc ty1 aty;
-           resolve ty2, ctx2
+           identify ~loc ty1 aty;
+           substitute ty2, ctx2
        | ty -> typing_error ~loc "this expression has type %s but is applied as if it were a function" (string_of_ltype ty))
+    | Let (x, e1, e2) ->
+        let ty1, ctx1 = infer ctx e1 in
+        let ctx2 = define ctx1 x ty1 in
+        let ty2, ctx3 = infer ctx2 e2 in
+        let ctx4 = remove_bound ~loc ctx1 ctx3 x in
+        ty2, ctx4
+
 
   | Array lst ->
       (match lst with
@@ -231,7 +234,7 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
        | e :: es ->
            let ty, ctx1 = infer ctx e in
            let rec aux ctx = function
-             | [] -> LArr (resolve ty), ctx
+             | [] -> LArr (substitute ty), ctx
              | e :: es ->
                  let ctx2 = check ctx e ty in
                  aux ctx2 es
@@ -268,7 +271,7 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       let ctx2 = check ctx1 e2 ty in
       (match unwrap ty with
        | LInt | LBool | LAnd _ | LPlus _ | LArr _ -> ()
-       | _ -> typing_error ~loc "cannot compare %s" (string_of_ltype (resolve ty)));
+       | _ -> typing_error ~loc "cannot compare %s" (string_of_ltype (substitute ty)));
       LBang LBool, ctx2
 
   | If (cond, e1, e2) ->
@@ -276,11 +279,11 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       let ty1, ctx1 = infer ctx' e1 in
       let ctx2 = check ctx' e2 ty1 in
       require_same_context ~loc ctx1 ctx2;
-      resolve ty1, ctx1
+      substitute ty1, ctx1
 
   | Demote e ->
       let ty, ctx1 = infer ctx e in
-      (match resolve ty with
+      (match substitute ty with
        | LBang ty' -> ty', ctx1
        | ty -> typing_error ~loc "expected !-type but got %s" (string_of_ltype ty))
 
@@ -290,7 +293,7 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       LAnd (ty1, ty2), ctx2
   | Split (pair, x, y, body) ->
       let pair_ty, ctx1 = infer ctx pair in
-      (match resolve pair_ty with
+      (match substitute pair_ty with
        | LAnd (ty1, ty2) ->
            let ctx' = define (define ctx1 x ty1) y ty2 in
            let ty, ctx2 = infer ctx' body in
@@ -305,15 +308,18 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
       LWith (ty1, ty2), ctx1
   | Fst e ->
       let ty, ctx' = infer ctx e in
-      (match resolve ty with
+      (match substitute ty with
        | LWith (ta, _) -> ta, ctx'
        | ty -> typing_error ~loc "this expression has type %s but fst expects a with-pair" (string_of_ltype ty))
   | Snd e ->
       let ty, ctx' = infer ctx e in
-      (match resolve ty with
+      (match substitute ty with
        | LWith (_, tb) -> tb, ctx'
        | ty -> typing_error ~loc "this expression has type %s but snd expects a with-pair" (string_of_ltype ty))
 
+  | Kill (x, e) -> 
+        let ctx1 = remove ctx x in
+        infer ctx1 e
 
 let check_rec ctx f a b e =
   let ty = LBang (LLolli (a, b)) in

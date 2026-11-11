@@ -13,7 +13,6 @@ type ltype =
   | LWith of ltype * ltype (** with (additive conjunction) [s & t] *)
   | LPlus of ltype * ltype (** plus (additive disjunction) [s ⊕ t] *)
   | LBang of ltype (** bang type [!t] *)
-  | A 
   | B of int
 
 type expr = expr' Zoo.located
@@ -39,6 +38,7 @@ and expr' =
 
   | Fun of name * ltype * expr (** linear function [lambda x : t in e] *)
   | Apply of expr * expr  (** linear aplication [e1 e2]*)
+  | Let of name * expr * expr
 
   | Inl of expr
   | Inr of expr
@@ -56,6 +56,8 @@ and expr' =
   | Lookup (** lookup in array [e1[e2]]*)
   | Modify
   | Get 
+
+  | Kill of name * expr
 
 
 type toplevel_cmd = 

@@ -1,6 +1,7 @@
+(** An interpreter *)
 open Syntax
 
-(* Define a structure that will save variable names and their values. Equivalent to Map.Make(String) *)
+(** Define a structure that will save variable names and their values. Equivalent to Map.Make(String) *)
 module Environment = Map.Make(struct 
   type t = name
   let compare = compare
@@ -13,15 +14,15 @@ module NameSet = Set.Make(String)
 
 type value =
   | VInt of int
+  | VArr of value array
   | VBool of bool
   | VPair of value * value
   | VInl of value
   | VInr of value
-  | VWith of environment * expr * expr 
-  | VFun of environment * name * expr (* This form is needed for application. Name serves for a name of a variable that will get substituted on apply. It can be done with VClosure, but it is easier with VFun*)
-  | VArr of value array
-  | VRecFun of environment * name * name * expr (* recursive function: environment, function name, argument name, body *)
-  | VBuiltin of (value -> value)
+  | VWith of environment * expr * expr (** VWitth (closure, e1, e2). Closure is needed because only one of the argumets can be evaluated *)
+  | VFun of environment * name * expr (* VFun (closure, x, f(x))*)
+  | VRecFun of environment * name * name * expr (** recursive function: closure, function name, x, f(x) *)
+  | VBuiltin of (value -> value) (** Builtin functions do not need a closre, because they do not rely on the environment. *)
 
 and environment = value Environment.t
 
@@ -54,6 +55,7 @@ let rec str_of_value = function
     string_of_value_array arr
   )
 
+(** check if values compared are equal *)
 let rec equal_value ~loc v1 v2 =
   match v1, v2 with
   | VInt x, VInt y -> x = y
@@ -66,7 +68,7 @@ let rec equal_value ~loc v1 v2 =
   | VWith _, _ -> runtime_error ~loc "Cannot compare &-pair"
   | _ -> assert false  
 
-
+(** interpreter *)
 let rec interp env {Zoo.data = e; loc} : value = 
   match e with
   | Var name -> (match Environment.find_opt name env with
@@ -133,50 +135,32 @@ let rec interp env {Zoo.data = e; loc} : value =
       VBuiltin (fun i ->
         VBuiltin (fun f ->
           VBuiltin (fun a ->
-            match i, f, a with
-            | VInt i, VFun (env1, name, expr), VArr a -> (
-                let v1 = Array.get a i in
-                let env2 = define name v1 env1 in
-                let v2 = interp env2 expr in
+            match i, a with
+            | VInt i, VArr a ->
+                let v2 = apply_value f (Array.get a i) in
                 Array.set a i v2;
                 VArr a
-            )
-            | _ -> assert false
-          )
-        )
-      )
+            | _ -> assert false)))
   | Get ->
       VBuiltin (fun i ->
         VBuiltin (fun f ->
           VBuiltin (fun arr ->
-            match i, f, arr with
-            | VInt i, VFun (env1, name, expr), VArr a -> (
-                let v1 = Array.get a i in
-                let env2 = define name v1 env1 in
-                let v2 = interp env2 expr in
-                match v2 with
-                | VPair (result, v2) -> 
-                    Array.set a i v2;
-                    VPair (result, VArr a)
-                | _ -> assert false
-            )
-            | _ -> assert false
-          )
-        )
-      )
+            match i, arr with
+            | VInt i, VArr a ->
+                (match apply_value f (Array.get a i) with
+                 | VPair (result, v2) ->
+                     Array.set a i v2;
+                     VPair (result, VArr a)
+                 | _ -> assert false)
+            | _ -> assert false)))
 
   | Fun (x, _, body) -> VFun (remove x env, x, body)
-  | Apply (f, a) -> (
-      match interp env f with
-      | VFun (env1, x, expr) -> 
-        let env2 = define x (interp env a) env1 in
-        interp env2 expr
-      | VRecFun (env1, f, x, expr) as v -> 
-          let env2 = define x (interp env a) (define f v env1)in
-          interp env2 expr
-      | VBuiltin f -> f (interp env a)
-      | _ -> assert false
-    )
+  | Apply (f, a) ->
+      let fv = interp env f in
+      apply_value fv (interp env a)
+  | Let (x, e1, e2) ->
+      let env1 = define x (interp env e1) env in
+      interp env1 e2
 
 
   | If (cond, e1, e2) -> (
@@ -198,14 +182,14 @@ let rec interp env {Zoo.data = e; loc} : value =
     | _ -> assert false
   )
 
- | Inl expr -> VInl (interp env expr)
-  | Inr expr -> VInr (interp env expr)
-  | Match (sum, lname, le, rname, re) -> (
-    match interp env sum with
-    | VInl v -> interp (define lname v env) le
-    | VInr v -> interp (define rname v env) re
-    | _ -> assert false
-  )
+  | Inl expr -> VInl (interp env expr)
+    | Inr expr -> VInr (interp env expr)
+    | Match (sum, lname, le, rname, re) -> (
+      match interp env sum with
+      | VInl v -> interp (define lname v env) le
+      | VInr v -> interp (define rname v env) re
+      | _ -> assert false
+    )
 
   | Bundle (e1, e2) -> VWith (env, e1, e2)
   | Fst expr -> (
@@ -219,6 +203,14 @@ let rec interp env {Zoo.data = e; loc} : value =
     | _ -> assert false
   )
 
+  | Kill (_, e) -> interp env e 
+
+and apply_value fv v =
+  match fv with
+  | VFun (env1, x, body) -> interp (define x v env1) body
+  | VRecFun (env1, f, x, body) -> interp (define x v (define f fv env1)) body
+  | VBuiltin g -> g v
+  | _ -> assert false
     
 let make_rec ~loc f = function
   | VFun (env, x, body) -> VRecFun (env, f, x, body)

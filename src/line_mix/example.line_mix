@@ -23,18 +23,56 @@ x
 
 let arr = [1, 2, 3, 4]
 let len_and_arr = length arr
-#let arr = match len_and_arr with (l, a) -> \
-#    match swap a (l - 1) 100 with (v, a) -> a
-#arr
+let arr = match len_and_arr with (l, a) -> a
+
+# length, modify, make and get can take in any array tipe, 
+# lookup can only accept arrays of non linear types
+modify
+lookup
+
+let lookup_matrix = fun i : !Int -> fun j : !Int -> \
+     fun matrix : ((!Int) Array) Array -> \
+        get i (lookup j) matrix
+
+let matrix =  [ \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4], \
+    [1, 2, 3, 4] \
+]
+
+lookup_matrix 0 3 matrix
+
+# Empty array has any array type
+let empty_arr = []
+
+
+# Kill
+let a = [1, 2, 3]
+let l = match length a with (l, a) -> \
+    kill a give l
+l
+
+
+# Local definitions
+let a = match (1, 2) with (a, b) -> \
+    let plus1and2 = a + b in \
+    plus1and2 + 3
+a
+
 
 
 # Pair type.
 
 let int_and_arr = (100, [1, 2, 3])
-# match int_and_arr with (v, a) -> swap a 2 v
+match int_and_arr with (v, a) -> modify 2 (fun x : !Int -> v) a
 
 
-# When using a sum type (A + B) you must define what type each side has.
+# Sum type
+# If not annotated the unknown type is assumed to be linear
+
+let s = inl 3
+match s with inl x -> 1 | inr y -> y
 
 let s = (inl 3 : !Int + !Int)
 match s with inl x -> 1 | inr y -> 2
@@ -42,11 +80,12 @@ match s with inl x -> 1 | inr y -> 2
 
 # With type.
 
-# let a = [1, 2, 3, 4]
+let a = [1, 2, 3, 4]
 
-# let with_structure = a & (swap a 0 100)
+let with_structure = a & (lookup 0 a)
 
-# snd with_structure
+snd with_structure
+
 
 # Functions.
 
@@ -67,10 +106,13 @@ f 1
 # If-then-else.
 # Each branch of an if-then-else expression should use exactly the same linear resources.
 
-#let a = [1, 2, 3, 4]
-#let c = 1
+let a = [1, 2, 3, 4]
+let c = 11
 
-# if c < 10 then a else match swap a 0 100 with (v, a) -> a
+if c < 10 \ 
+        then a \
+        else \ 
+            match get 0 (fun x : !Int -> (x, 100)) a with (v, a) -> a
 
 # Comparing.
 # You can use < between numbers and = with most types.
@@ -80,23 +122,8 @@ a = [1, 2, 3]
 
 (1, 2) = (3, 2)
 
-(inl ^3 : Int + Int) = (inl ^3 : Int + Int)
+inl ^3  = inl ^3 
 
-
-# Example programs.
-
-# let option_find = fun a : Array !Int -> fun i : !Int -> \
-#         match (length a) with (l, a) -> \
-#             if i < l \
-#             then (inl (lookup a i) : (!Int * Array !Int) +  Array !Int) \
-#             else (inr a : (!Int * Array !Int) +  Array !Int)
-
-
-# let a = [1, 2, 3, 4]
-# let option = option_find a 100
-# 
-# match option with \
-#     inl int_and_arr -> (match int_and_arr with (i, arr) -> arr) | inr arr -> arr
 
 
 
