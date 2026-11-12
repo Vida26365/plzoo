@@ -16,11 +16,11 @@ The language has the following constructs:
     ```
     match t with (x, y) -> f x y
     ```
-- sum type `inl a : A + B`, `inr b : A + B`. When creating a sum type, the type must be delcared `(inl x : A + B)`.
+- sum type `inl a : A + B`, `inr b : A + B`. 
     ```
     match t with inl x -> f x | inr y -> g y
     ```
-- with type `a & b : A & B`. Zou can use either frst (`fst t`) or the second element (`snd t`), not both. 
+- with type `a & b : A & B`. You can use either frst (`fst t`) or the second element (`snd t`), not both. 
 
 - (linear) function type `fun x : A -> e : A -o B`. It can be applied `f a`.
 - restriction of variables with `^`. For example, `5 : !Int` and `^5 : Int`
@@ -33,4 +33,3 @@ The language has the following constructs:
     ``` 
     let rec f = fun x : !Int -> if x < 10 then f (x + 1) else x
     ```
--  A line that is just an expression prints the result of the expression with its type. That way a linear value can be dropped.
