@@ -24,6 +24,7 @@ x
 let arr = [1, 2, 3, 4]
 let len_and_arr = length arr
 let arr = match len_and_arr with (l, a) -> a
+arr
 
 # length, modify, make and get can take in any array tipe, 
 # lookup can only accept arrays of non linear types
@@ -45,6 +46,7 @@ lookup_matrix 0 3 matrix
 
 # Empty array has any array type
 let empty_arr = []
+empty_arr
 
 
 # Kill
@@ -129,6 +131,6 @@ inl ^3  = inl ^3
 
 
 
-
+# If linear variable is unused, you get an error at the end of the file
 
 let a = ^5
