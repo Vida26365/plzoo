@@ -16,7 +16,7 @@ module Line = Zoo.Main(struct
 
   let initial_environment = (Type_checker.empty, Interpret.Environment.empty)
 
-  let file_parser = Some (fun _ -> Parser.file Lexer.token)
+  let file_parser = Some (fun _ lexbuf -> Parser.file Lexer.token lexbuf @ [Syntax.Quit])
 
   let toplevel_parser = Some (fun _ -> Parser.toplevel Lexer.token)
 
@@ -59,7 +59,10 @@ module Line = Zoo.Main(struct
 
     | Syntax.Skip -> (ctx, env)
 
-    | Syntax.Quit -> exit 0
+    | Syntax.Quit -> 
+        Type_checker.check_all_used ctx;
+        (ctx, env)
+
 
 end) ;;
 

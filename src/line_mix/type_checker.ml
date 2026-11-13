@@ -316,3 +316,11 @@ let check_rec ctx f a b e =
     let ctx1 = define ctx f ty in
     let ctx = check ctx1 e ty in
     ty, ctx
+
+
+    (** Raise an error if any linear variable is still in the context, i.e. was never used. *)
+let check_all_used ?loc ctx =
+  let unused = Context.filter (fun _ ty -> is_linear ty) ctx in
+  if not (Context.is_empty unused) then
+    let names = List.map fst (Context.bindings unused) in
+    Zoo.error ~kind:"Linear error" ?loc "linear variables never used: %s" (String.concat ", " names)
