@@ -54,8 +54,8 @@ and expr' =
   | Make (** make array [ e, e, e, ... , e]*)
   | Length (** length of array [length e]*)
   | Lookup (** lookup in array [e1[e2]]*)
-  | Modify
-  | Get 
+  | Modify (** modify array [modify : !(Int -o (A -o A) -o A Array -o A Array)] *)
+  | Get (** [get : !(Int -o (A -o B ⊗ A) -o A Array -o B ⊗ A Array)] *) 
 
   | Kill of name * expr
 

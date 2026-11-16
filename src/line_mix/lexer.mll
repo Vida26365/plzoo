@@ -31,7 +31,9 @@ rule token = parse
   | "kill"          { KILL }
   | "give"           { GIVE }
 
-  | "match"         { MATCH }
+  | "case"          { CASE }
+  | "of"            { OF }
+  | "split"         { SPLIT }
   | "with"          { WITH }
   | "inl"           { INL }
   | "inr"           { INR }

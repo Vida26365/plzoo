@@ -14,7 +14,7 @@
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token BANG CARET
 %token LET REC TO FROM IN
-%token MATCH WITH INL INR ALTERNATIVE
+%token CASE OF SPLIT WITH INL INR ALTERNATIVE
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
@@ -66,9 +66,9 @@ plain_expr:
     { Fun (x, t, e) }
   | IF cond = expr THEN e1 = expr ELSE e2 = expr
     { If (cond, e1, e2) }
-  | MATCH scrut = expr WITH INL x = VAR ARROW left = infix_expr ALTERNATIVE INR y = VAR ARROW right = expr
+  | CASE scrut = expr OF INL x = VAR ARROW left = infix_expr ALTERNATIVE INR y = VAR ARROW right = expr
     { Match (scrut, x, left, y, right) }
-  | MATCH pair = expr WITH LPAREN x = VAR COMMA y = VAR RPAREN ARROW body = expr
+  | SPLIT pair = expr TO LPAREN x = VAR COMMA y = VAR RPAREN IN body = expr
     { Split (pair, x, y, body) }
   | LET x = VAR EQUAL e1 = expr IN e2 = expr
     { Let (x, e1, e2)}

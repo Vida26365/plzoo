@@ -23,7 +23,7 @@ x
 
 let arr = [1, 2, 3, 4]
 let len_and_arr = length arr
-let arr = match len_and_arr with (l, a) -> a
+let arr = split len_and_arr to (l, a) in a
 arr
 
 # length, modify, make and get can take in any array tipe, 
@@ -51,13 +51,13 @@ empty_arr
 
 # Kill
 let a = [1, 2, 3]
-let l = match length a with (l, a) -> \
+let l = split length a to (l, a) in \
     kill a give l
 l
 
 
 # Local definitions
-let a = match (1, 2) with (a, b) -> \
+let a = split (1, 2) to (a, b) in \
     let plus1and2 = a + b in \
     plus1and2 + 3
 a
@@ -67,17 +67,17 @@ a
 # Pair type.
 
 let int_and_arr = (100, [1, 2, 3])
-match int_and_arr with (v, a) -> modify 2 (fun x : !Int -> v) a
+split int_and_arr to (v, a) in modify 2 (fun x : !Int -> v) a
 
 
 # Sum type
 # If not annotated the unknown type is assumed to be linear
 
 let s = inl 3
-match s with inl x -> 1 | inr y -> y
+case s of inl x -> 1 | inr y -> y
 
 let s = (inl 3 : !Int + !Int)
-match s with inl x -> 1 | inr y -> 2
+case s of inl x -> 1 | inr y -> 2
 
 
 # With type.
@@ -114,7 +114,7 @@ let c = 11
 if c < 10 \ 
         then a \
         else \ 
-            match get 0 (fun x : !Int -> (x, 100)) a with (v, a) -> a
+            split get 0 (fun x : !Int -> (x, 100)) a to (v, a) in a
 
 # Comparing.
 # You can use < between numbers and = with most types.
