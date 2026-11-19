@@ -31,6 +31,12 @@ arr
 modify
 lookup
 
+# make ca create only arrays with nonlinear values, init can create any array
+
+let arr_of_arr = init 4 (fun i : !Int -> make 3 i) 
+arr_of_arr
+
+
 let lookup_matrix = fun i : !Int -> fun j : !Int -> \
      fun matrix : ((!Int) Array) Array -> \
         get i (lookup j) matrix

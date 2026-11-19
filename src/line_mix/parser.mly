@@ -18,7 +18,7 @@
 %token FUN ARROW
 %token IF THEN ELSE
 %token FST SND
-%token MAKE LENGTH LOOKUP MODIFY GET
+%token MAKE INIT LENGTH LOOKUP MODIFY GET
 %token KILL GIVE
 %token TYPE_INT TYPE_BOOL TYPE_ARR LOLLI AMP
 %token EOF
@@ -93,11 +93,6 @@ app_expr: mark_position(plain_app_expr) { $1 }
 plain_app_expr:
   | e = plain_atom_expr                                 { e }
   | f = app_expr a = atom_expr                    { Apply (f, a) }
-  | MAKE                            { Make  }
-  | LENGTH                          { Length  }
-  | LOOKUP                          { Lookup  }
-  | GET                             { Get  }
-  | MODIFY                          { Modify  }
   | INL e = atom_expr { Inl e }
   | INR e = atom_expr { Inr e }
   | FST e = atom_expr { Fst e }
@@ -114,6 +109,12 @@ plain_atom_expr:
   | FALSE       { Bool false }
   | LBRACKET es = separated_list(COMMA, expr) RBRACKET { Array es }
   | CARET e = atom_expr { Demote e }
+  | MAKE                            { Make  }
+  | INIT                            { Init  }
+  | LENGTH                          { Length  }
+  | LOOKUP                          { Lookup  }
+  | GET                             { Get  }
+  | MODIFY                          { Modify  }
 
 ltype:
   | t1 = plus_type LOLLI t2 = ltype

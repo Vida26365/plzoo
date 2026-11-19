@@ -34,7 +34,7 @@ rule token = parse
   | "case"          { CASE }
   | "of"            { OF }
   | "split"         { SPLIT }
-  | "with"          { WITH }
+  (* | "with"          { WITH } *)
   | "inl"           { INL }
   | "inr"           { INR }
 
@@ -45,6 +45,7 @@ rule token = parse
   | "else"          { ELSE }
 
   | "make"          { MAKE }
+  | "init"          { INIT }
   | "length"        { LENGTH }
   | "lookup"        { LOOKUP }
   | "modify"        { MODIFY }

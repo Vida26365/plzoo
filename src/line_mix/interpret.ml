@@ -113,6 +113,12 @@ let rec interp env {Zoo.data = e; loc} : value =
           | _ -> assert false
         )
       )
+  | Init ->
+      VBuiltin (fun n ->
+        VBuiltin ( fun f ->
+          match n with
+          | VInt k -> VArr (Array.init k (fun i -> apply_value f (VInt i)) )
+          | _ -> assert false))
   | Length ->
       VBuiltin (fun a ->
         match a with

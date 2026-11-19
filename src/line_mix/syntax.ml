@@ -52,6 +52,7 @@ and expr' =
 
   | Array of expr list (** array [e1, e2, e3, ... , en]*)
   | Make (** make array [ e, e, e, ... , e]*)
+  | Init
   | Length (** length of array [length e]*)
   | Lookup (** lookup in array [e1[e2]]*)
   | Modify (** modify array [modify : !(Int -o (A -o A) -o A Array -o A Array)] *)

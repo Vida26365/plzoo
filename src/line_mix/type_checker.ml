@@ -233,6 +233,9 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
     | Make ->
         let a = fresh () in
         LBang (LLolli (LInt, LLolli (LBang a, LArr (LBang a)))), ctx
+    | Init ->
+        let a = fresh() in
+        LBang (LLolli (LInt, LLolli (LBang (LLolli (LInt, a)), LArr a))), ctx
     | Length ->
         let a = fresh () in
         LBang (LLolli (LArr a, LAnd (LBang LInt, LArr a))), ctx
