@@ -1,6 +1,3 @@
-# function cnt counts how many ones there are in 8 neighboring squares on board of a square (i, j). 
-# Other functions are helper functions.
-
 
 let board = [ \
     [1, 0, 0, 0, 0, 0, 0],\

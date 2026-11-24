@@ -1,5 +1,5 @@
 (executable
- (name line_mix)
+ (name lin)
  (libraries zoo)
  (promote
   (until-clean)

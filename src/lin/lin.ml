@@ -1,5 +1,5 @@
 module Line = Zoo.Main(struct
-  let name = "line_mix"
+  let name = "lin"
 
   type command = Syntax.toplevel_cmd
 

@@ -232,23 +232,23 @@ and infer (ctx : context) ({Zoo.data = e'; loc}) : ltype * context =
             aux ctx1 es)
     | Make ->
         let a = fresh () in
-        LBang (LLolli (LInt, LLolli (LBang a, LArr (LBang a)))), ctx
+        LBang (LLolli (LInt, LBang (LLolli (LBang a, LArr (LBang a))))), ctx
     | Init ->
         let a = fresh() in
-        LBang (LLolli (LInt, LLolli (LBang (LLolli (LInt, a)), LArr a))), ctx
+        LBang (LLolli (LInt, LBang (LLolli (LBang (LLolli (LBang LInt, a)), LArr a)))), ctx
     | Length ->
         let a = fresh () in
         LBang (LLolli (LArr a, LAnd (LBang LInt, LArr a))), ctx
     | Lookup ->
         let a = fresh () in
-        LBang (LLolli (LInt, LLolli (LArr (LBang a), LAnd (LBang a, LArr (LBang a))))), ctx
+        LBang (LLolli (LInt, LBang (LLolli (LArr (LBang a), LAnd (LBang a, LArr (LBang a)))))), ctx
     | Modify ->
         let a = fresh () in
-        LBang (LLolli (LInt, LLolli (LLolli (a, a), LLolli (LArr a, LArr a)))), ctx
+        LBang (LLolli (LInt, LBang (LLolli (LLolli (a, a), LBang (LLolli (LArr a, LArr a)))))), ctx
     | Get ->
         let a = fresh () in
         let b = fresh () in
-        LBang (LLolli (LInt, LLolli (LLolli (a, LAnd (b, a)), LLolli (LArr a, LAnd (b, LArr a))))), ctx
+        LBang (LLolli (LInt, LBang(LLolli (LLolli (a, LAnd (b, a)), LBang (LLolli (LArr a, LAnd (b, LArr a))))))), ctx
 
     | Times (e1, e2) | Plus (e1, e2) | Divide (e1, e2) | Minus (e1, e2) | Mod (e1, e2) ->
         let ty1, ctx1 = checkish ctx e1 LInt in
